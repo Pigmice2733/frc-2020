@@ -3,6 +3,7 @@ package com.pigmice.frc.robot.subsystems;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.pigmice.frc.lib.controllers.TakeBackHalf;
+import com.pigmice.frc.lib.motion.setpoint.Setpoint;
 
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -13,6 +14,8 @@ public class Shooter implements ISubsystem {
 
     private double shooterRPM = 0.0;
     private double shooterVoltage = 0.0;
+
+    private final Setpoint targetRPM = new Setpoint(0.0, 4000, 0.0, 0.0, 0.0);
 
     private TakeBackHalf controller = new TakeBackHalf(1.0e-5, 0.68);
 
@@ -47,7 +50,7 @@ public class Shooter implements ISubsystem {
 
     @Override
     public void updateOutputs() {
-        double output = controller.calculateOutput(shooterRPM, 4000);
+        double output = controller.calculateOutput(shooterRPM, targetRPM);
         shooterVoltage = output * 100.0;
         motor.set(ControlMode.PercentOutput, output);
     }

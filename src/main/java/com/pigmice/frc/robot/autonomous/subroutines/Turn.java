@@ -2,9 +2,8 @@ package com.pigmice.frc.robot.autonomous.subroutines;
 
 import com.pigmice.frc.lib.controllers.PID;
 import com.pigmice.frc.lib.controllers.PIDGains;
-import com.pigmice.frc.lib.motion.Setpoint;
-import com.pigmice.frc.lib.motion.StaticProfile;
 import com.pigmice.frc.lib.motion.execution.ProfileExecutor;
+import com.pigmice.frc.lib.motion.profile.StaticProfile;
 import com.pigmice.frc.lib.utils.Range;
 import com.pigmice.frc.robot.subsystems.Drivetrain;
 
@@ -29,8 +28,8 @@ public class Turn implements ISubroutine {
         this.absolute = absolute;
 
         PIDGains gains = new PIDGains(0.6, 0.05, 0.0);
-        Range turningBounds = new Range(-0.8, 0.8);
-        turningPID = new PID(gains, turningBounds, 0.02);
+        Range outputBounds = new Range(-0.8, 0.8);
+        turningPID = new PID(gains, outputBounds, 0.02);
     }
 
     public void initialize() {
@@ -43,7 +42,7 @@ public class Turn implements ISubroutine {
         }
 
         StaticProfile profile = new StaticProfile(0.0, initialAngle, targetAngle, 2*Math.PI, 2*Math.PI, Math.PI);
-        executor = new ProfileExecutor(profile, this::driveOutput, this::getAngle, 0.0075*2*Math.PI);
+        executor = new ProfileExecutor(profile, turningPID, this::driveOutput, this::getAngle, 0.0075*2*Math.PI);
 
         turningPID.initialize(0.0, 0.0);
         executor.initialize();
@@ -57,9 +56,7 @@ public class Turn implements ISubroutine {
         return drivetrain.getHeading();
     }
 
-    private void driveOutput(Setpoint sp) {
-        double output = turningPID.calculateOutput(getAngle(), sp.getPosition());
-
+    private void driveOutput(double output) {
         drivetrain.tankDrive(-output, output);
     }
 }

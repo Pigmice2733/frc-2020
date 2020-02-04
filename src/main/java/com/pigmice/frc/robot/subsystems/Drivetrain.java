@@ -75,6 +75,10 @@ public class Drivetrain implements ISubsystem {
         return heading;
     }
 
+    public Pose getPose() {
+        return odometry.getPose();
+    }
+
     public void tankDrive(double leftSpeed, double rightSpeed) {
         leftDemand = leftSpeed;
         rightDemand = rightSpeed;
