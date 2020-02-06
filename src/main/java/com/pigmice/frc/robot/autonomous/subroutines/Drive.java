@@ -21,7 +21,7 @@ public class Drive implements ISubroutine {
         this.drivetrain = drivetrain;
         this.targetDistance = meters;
 
-        PIDGains gains = new PIDGains(0.6, 0.05, 0.0);
+        PIDGains gains = new PIDGains(0.5, 0.0, 0.0, 0.0, 0.15, 0.005);
         Range outputBounds = new Range(-0.8, 0.8);
         drivingPID = new PID(gains, outputBounds, 0.02);
     }
@@ -29,7 +29,7 @@ public class Drive implements ISubroutine {
     public void initialize() {
         initialPosition = new Point(drivetrain.getPose());
 
-        StaticProfile profile = new StaticProfile(0.0, 0.0, targetDistance, 2 * Math.PI, 2 * Math.PI, Math.PI);
+        StaticProfile profile = new StaticProfile(0.0, 0.0, targetDistance, 4, 6, 4);
         executor = new ProfileExecutor(profile, drivingPID, this::output, this::getDistance, 0.0075 * 2 * Math.PI);
 
         drivingPID.initialize(0.0, 0.0);

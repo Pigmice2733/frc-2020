@@ -6,7 +6,7 @@ import java.util.List;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.kauailabs.navx.frc.AHRS;
 import com.pigmice.frc.robot.autonomous.Autonomous;
-import com.pigmice.frc.robot.autonomous.Rotate;
+import com.pigmice.frc.robot.autonomous.Test;
 import com.pigmice.frc.robot.subsystems.Drivetrain;
 import com.pigmice.frc.robot.subsystems.ISubsystem;
 import com.pigmice.frc.robot.subsystems.Intake;
@@ -36,7 +36,7 @@ public class Robot extends TimedRobot {
 
         subsystems.forEach((ISubsystem subsystem) -> subsystem.initialize());
 
-        autonomous = new Rotate(drivetrain);
+        autonomous = new Test(drivetrain);
 
         //CameraServer.getInstance().startAutomaticCapture("Driver Cam", 0);
 
