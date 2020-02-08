@@ -27,6 +27,8 @@ public abstract class Autonomous {
                 state++;
                 if (state < subroutines.size()) {
                     subroutines.get(state).initialize();
+                } else {
+                    System.out.println("Auto done");
                 }
             }
         }

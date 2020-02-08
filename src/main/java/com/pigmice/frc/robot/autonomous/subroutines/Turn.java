@@ -7,6 +7,8 @@ import com.pigmice.frc.lib.motion.profile.StaticProfile;
 import com.pigmice.frc.lib.utils.Range;
 import com.pigmice.frc.robot.subsystems.Drivetrain;
 
+import edu.wpi.first.wpilibj.Timer;
+
 public class Turn implements ISubroutine {
     private ProfileExecutor executor;
     private PID turningPID;
@@ -27,22 +29,22 @@ public class Turn implements ISubroutine {
         this.targetRotation = radians;
         this.absolute = absolute;
 
-        PIDGains gains = new PIDGains(0.25, 0.5, 0.0, 0.0, 0.44/(2*Math.PI), 0.008);
+        PIDGains gains = new PIDGains(0.6, 0.3, 0.0, 0.0, 0.40 / (2 * Math.PI), 0.00925);
         Range outputBounds = new Range(-0.8, 0.8);
         turningPID = new PID(gains, outputBounds, 0.02);
     }
 
     public void initialize() {
-        initialAngle = drivetrain.getHeading();
-
         if (absolute) {
             targetAngle = targetRotation;
         } else {
             targetAngle = initialAngle + targetRotation;
         }
 
-        StaticProfile profile = new StaticProfile(0.0, initialAngle, targetAngle, 8*Math.PI, 2.5*Math.PI, 2.0*Math.PI);
-        executor = new ProfileExecutor(profile, turningPID, this::driveOutput, this::getAngle, 0.0075*2*Math.PI);
+        StaticProfile profile = new StaticProfile(0.0, initialAngle, targetAngle,
+                2.0 * Math.PI, 2.5 * Math.PI, 2.0 * Math.PI);
+        executor = new ProfileExecutor(profile, turningPID, this::driveOutput, this::getAngle,
+                0.02, 0.05, Timer::getFPGATimestamp);
 
         turningPID.initialize(0.0, 0.0);
         executor.initialize();

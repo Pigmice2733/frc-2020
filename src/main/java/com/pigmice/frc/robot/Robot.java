@@ -65,7 +65,7 @@ public class Robot extends TimedRobot {
         subsystems.forEach((ISubsystem subsystem) -> subsystem.updateInputs());
 
         if(controls.demoMode()) {
-            drivetrain.arcadeDrive(0.4 * controls.driveSpeed(), 0.4 * controls.turnSpeed());
+            drivetrain.arcadeDrive(0.2 * controls.driveSpeed(), 0.2 * controls.turnSpeed());
         } else {
             drivetrain.arcadeDrive(controls.driveSpeed(), controls.turnSpeed());
         }

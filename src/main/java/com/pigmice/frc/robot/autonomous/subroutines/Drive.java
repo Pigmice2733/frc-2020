@@ -8,6 +8,8 @@ import com.pigmice.frc.lib.utils.Point;
 import com.pigmice.frc.lib.utils.Range;
 import com.pigmice.frc.robot.subsystems.Drivetrain;
 
+import edu.wpi.first.wpilibj.Timer;
+
 public class Drive implements ISubroutine {
     private ProfileExecutor executor;
     private PID drivingPID;
@@ -30,7 +32,8 @@ public class Drive implements ISubroutine {
         initialPosition = new Point(drivetrain.getPose());
 
         StaticProfile profile = new StaticProfile(0.0, 0.0, targetDistance, 4, 6, 4);
-        executor = new ProfileExecutor(profile, drivingPID, this::output, this::getDistance, 0.0075 * 2 * Math.PI);
+        executor = new ProfileExecutor(profile, drivingPID, this::output, this::getDistance,
+                0.0075 * 2 * Math.PI, 0.05, Timer::getFPGATimestamp);
 
         drivingPID.initialize(0.0, 0.0);
         executor.initialize();
