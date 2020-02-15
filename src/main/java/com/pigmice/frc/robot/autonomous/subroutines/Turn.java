@@ -29,7 +29,7 @@ public class Turn implements ISubroutine {
         this.targetRotation = radians;
         this.absolute = absolute;
 
-        PIDGains gains = new PIDGains(0.6, 0.3, 0.0, 0.0, 0.40 / (2 * Math.PI), 0.00925);
+        PIDGains gains = new PIDGains(0.0, 0.0, 0.0, 0.0, 0.6 / (2 * Math.PI), 0.00135);
         Range outputBounds = new Range(-0.8, 0.8);
         turningPID = new PID(gains, outputBounds, 0.02);
     }
@@ -42,7 +42,7 @@ public class Turn implements ISubroutine {
         }
 
         StaticProfile profile = new StaticProfile(0.0, initialAngle, targetAngle,
-                2.0 * Math.PI, 2.5 * Math.PI, 2.0 * Math.PI);
+                2.0 * Math.PI, 1.5 * Math.PI, 1.25 * Math.PI);
         executor = new ProfileExecutor(profile, turningPID, this::driveOutput, this::getAngle,
                 0.02, 0.05, Timer::getFPGATimestamp);
 

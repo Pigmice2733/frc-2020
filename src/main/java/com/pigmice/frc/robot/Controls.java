@@ -75,7 +75,7 @@ public class Controls {
     }
 
     public boolean demoMode() {
-        return !joystick.getRawButton(profile.demoModeButton());
+        return false; //!joystick.getRawButton(profile.demoModeButton());
     }
 
     public boolean intake() {
