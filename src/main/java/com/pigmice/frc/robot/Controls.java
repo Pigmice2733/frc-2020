@@ -3,59 +3,102 @@ package com.pigmice.frc.robot;
 import edu.wpi.first.wpilibj.Joystick;
 
 public class Controls {
-    private interface JoystickProfile {
-        int demoModeButton();
-        int driveSpeedAxis();
-        int turnSpeedAxis();
-        int intakeButton();
+    private interface ControllerProfile {
+        boolean demoMode();
+        double driveSpeed();
+        double turnSpeed();
+        boolean intake();
+        boolean shoot();
+        boolean feed();
     }
 
-    private class EasySMX implements JoystickProfile {
-        public int demoModeButton() {
-            return 5;
+    private class EasySMX implements ControllerProfile {
+        private final Joystick joystick;
+
+        public EasySMX(Joystick joystick) {
+            this.joystick = joystick;
         }
 
-        public int driveSpeedAxis() {
-            return 1;
+        @Override
+        public boolean demoMode() {
+            return joystick.getRawButton(5);
         }
 
-        public int turnSpeedAxis() {
-            return 2;
+        @Override
+        public double driveSpeed() {
+            return joystick.getRawAxis(1);
         }
 
-        public int intakeButton() {
-            return 3;
+        @Override
+        public double turnSpeed() {
+            return joystick.getRawAxis(2);
+        }
+
+        @Override
+        public boolean intake() {
+            return joystick.getRawButton(3);
+        }
+
+        @Override
+        public boolean shoot() {
+            return joystick.getRawButton(8);
+        }
+
+        @Override
+        public boolean feed() {
+            return joystick.getRawButton(6);
         }
     }
 
-    private class XBoxProfile implements JoystickProfile {
-        public int demoModeButton() {
-            return 5;
+    private class XBox implements ControllerProfile {
+        private final Joystick joystick;
+
+        public XBox(Joystick joystick) {
+            this.joystick = joystick;
         }
 
-        public int driveSpeedAxis() {
-            return 1;
+        @Override
+        public boolean demoMode() {
+            return joystick.getRawButton(5);
         }
 
-        public int turnSpeedAxis() {
-            return 4;
+        @Override
+        public double driveSpeed() {
+            return joystick.getRawAxis(1);
         }
 
-        public int intakeButton() {
-            return 3;
+        @Override
+        public double turnSpeed() {
+            return joystick.getRawAxis(4);
+        }
+
+        @Override
+        public boolean intake() {
+            return joystick.getRawButton(3);
+        }
+
+        @Override
+        public boolean shoot() {
+            return joystick.getRawAxis(3) > 0.75;
+        }
+
+        @Override
+        public boolean feed() {
+            return joystick.getRawButton(6);
         }
     }
 
-    Joystick joystick = new Joystick(0);
-    JoystickProfile profile;
+    ControllerProfile controller;
 
     public Controls() {
+        Joystick joystick = new Joystick(0);
+
         if(joystick.getName().equals("EasySMX CONTROLLER")) {
-            profile = new EasySMX();
+            controller = new EasySMX(joystick);
         } else if(joystick.getName().equals("Controller (XBOX 360 For Windows)")){
-            profile = new XBoxProfile();
+            controller = new XBox(joystick);
         } else {
-            profile = new XBoxProfile();
+            controller = new XBox(joystick);
         }
     }
 
@@ -66,19 +109,27 @@ public class Controls {
     }
 
     public double turnSpeed() {
-        final double steering = joystick.getRawAxis(profile.turnSpeedAxis());
+        final double steering = controller.turnSpeed();
         return Math.pow(steering, 2) * Math.signum(steering);
     }
 
     public double driveSpeed() {
-        return -joystick.getRawAxis(profile.driveSpeedAxis());
+        return -controller.driveSpeed();
     }
 
     public boolean demoMode() {
-        return !joystick.getRawButton(profile.demoModeButton());
+        return !controller.demoMode();
     }
 
     public boolean intake() {
-        return joystick.getRawButton(profile.intakeButton());
+        return controller.intake();
+    }
+
+    public boolean shoot() {
+        return controller.shoot();
+    }
+
+    public boolean feed() {
+        return controller.feed();
     }
 }
