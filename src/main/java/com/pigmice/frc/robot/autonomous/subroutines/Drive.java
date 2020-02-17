@@ -33,7 +33,7 @@ public class Drive implements ISubroutine {
 
         StaticProfile profile = new StaticProfile(0.0, 0.0, targetDistance, 4, 6, 4);
         executor = new ProfileExecutor(profile, drivingPID, this::output, this::getDistance,
-                0.0075 * 2 * Math.PI, 0.05, Timer::getFPGATimestamp);
+                                        0.0075 * 2 * Math.PI, 0.05, Timer::getFPGATimestamp);
 
         drivingPID.initialize(0.0, 0.0);
         executor.initialize();
