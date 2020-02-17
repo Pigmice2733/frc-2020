@@ -4,21 +4,33 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 public class Feeder implements ISubsystem {
-    private final TalonSRX motor;
+    private final TalonSRX hopperMotor;
+    private final TalonSRX liftMotor;
 
-    private double speed = 0.0;
+    private final double hopperSpeed = 0.15;
+    private final double liftSpeed = 0.35;
 
-    public Feeder(TalonSRX motor) {
-        this.motor = motor;
+    private boolean runHopper = false, runLift = false;
+
+    public Feeder(TalonSRX hopperMotor, TalonSRX liftMotor) {
+        this.hopperMotor = hopperMotor;
+        this.liftMotor = liftMotor;
     }
 
     @Override
     public void initialize() {
-        speed = 0.0;
+        runHopper = false;
+        runLift = false;
     }
 
-    public void go(double speed) {
-        this.speed = speed;
+    public void feed() {
+        runHopper = true;
+        runLift = true;
+    }
+
+    public void stop() {
+        runHopper = false;
+        runLift = false;
     }
 
     @Override
@@ -31,7 +43,8 @@ public class Feeder implements ISubsystem {
 
     @Override
     public void updateOutputs() {
-        motor.set(ControlMode.PercentOutput, -speed);
+        hopperMotor.set(ControlMode.PercentOutput, runHopper ? hopperSpeed : 0.0);
+        liftMotor.set(ControlMode.PercentOutput, runLift ? liftSpeed : 0.0);
     }
 
     @Override

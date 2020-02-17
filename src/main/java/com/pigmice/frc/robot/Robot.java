@@ -75,9 +75,9 @@ public class Robot extends TimedRobot {
         }
 
         if(controls.feed()) {
-            feeder.go(0.4);
+            feeder.feed();
         } else {
-            feeder.go(0.0);
+            feeder.stop();
         }
 
         if (controls.intake()) {
@@ -142,13 +142,16 @@ public class Robot extends TimedRobot {
     }
 
     private Feeder setupFeeder() {
-        TalonSRX motor = new TalonSRX(1);
-        TalonSRX follower = new TalonSRX(2);
+        TalonSRX liftLeader = new TalonSRX(1);
+        TalonSRX liftFollower = new TalonSRX(2);
+        liftFollower.follow(liftLeader);
+        liftFollower.setInverted(true);
 
-        motor.setInverted(true);
+        TalonSRX hopperLeader = new TalonSRX(4);
+        TalonSRX hopperFollower = new TalonSRX(5);
+        hopperFollower.follow(hopperLeader);
+        hopperFollower.setInverted(true);
 
-        follower.follow(motor);
-
-        return new Feeder(motor);
+        return new Feeder(hopperLeader, liftLeader);
     }
 }
