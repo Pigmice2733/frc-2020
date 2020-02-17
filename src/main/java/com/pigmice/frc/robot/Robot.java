@@ -8,19 +8,21 @@ import com.kauailabs.navx.frc.AHRS;
 import com.pigmice.frc.robot.autonomous.Autonomous;
 import com.pigmice.frc.robot.autonomous.Test;
 import com.pigmice.frc.robot.subsystems.Drivetrain;
+import com.pigmice.frc.robot.subsystems.Feeder;
 import com.pigmice.frc.robot.subsystems.ISubsystem;
 import com.pigmice.frc.robot.subsystems.Intake;
 import com.pigmice.frc.robot.subsystems.Shooter;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
-import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.TimedRobot;
 
 public class Robot extends TimedRobot {
     private Drivetrain drivetrain;
-    private final Intake intake = setupIntake();
+    private Shooter shooter;
+    private Intake intake;
+    private Feeder feeder;
 
     private final List<ISubsystem> subsystems = new ArrayList<>();
 
@@ -31,16 +33,18 @@ public class Robot extends TimedRobot {
     @Override
     public void robotInit() {
         drivetrain = setupDrivetrain();
+        shooter = setupShooter();
+        feeder = setupFeeder();
+        intake = setupIntake();
+
         subsystems.add(drivetrain);
+        subsystems.add(shooter);
+        subsystems.add(feeder);
         subsystems.add(intake);
 
         subsystems.forEach((ISubsystem subsystem) -> subsystem.initialize());
 
         autonomous = new Test(drivetrain);
-
-        //CameraServer.getInstance().startAutomaticCapture("Driver Cam", 0);
-
-        //Vision.startProcessing();
     }
 
     @Override
@@ -70,11 +74,22 @@ public class Robot extends TimedRobot {
             drivetrain.arcadeDrive(controls.driveSpeed(), controls.turnSpeed());
         }
 
-        if(controls.intake()) {
-            double speed = controls.demoMode() ? 0.35 : 0.6;
-            intake.go(speed);
+        if(controls.feed()) {
+            feeder.go(0.4);
+        } else {
+            feeder.go(0.0);
+        }
+
+        if (controls.intake()) {
+            intake.go(0.6);
         } else {
             intake.go(0.0);
+        }
+
+        if(controls.shoot()) {
+            shooter.go();
+        } else {
+            shooter.stop();
         }
 
         subsystems.forEach((ISubsystem subsystem) -> subsystem.updateOutputs());
@@ -96,17 +111,11 @@ public class Robot extends TimedRobot {
         subsystems.forEach((ISubsystem subsystem) -> subsystem.updateDashboard());
     }
 
-    @Override
-    public void robotPeriodic() {
-        //SmartDashboard.putNumber("Target angle", Vision.getAngle());
-        //SmartDashboard.putNumber("Target distance", Vision.getDistance());
-    }
-
     public Drivetrain setupDrivetrain() {
-        CANSparkMax frontLeft = new CANSparkMax(2, MotorType.kBrushless);
-        CANSparkMax frontRight = new CANSparkMax(3, MotorType.kBrushless);
-        CANSparkMax backLeft = new CANSparkMax(1, MotorType.kBrushless);
-        CANSparkMax backRight = new CANSparkMax(4, MotorType.kBrushless);
+        CANSparkMax frontRight = new CANSparkMax(1, MotorType.kBrushless);
+        CANSparkMax backRight = new CANSparkMax(2, MotorType.kBrushless);
+        CANSparkMax frontLeft = new CANSparkMax(3, MotorType.kBrushless);
+        CANSparkMax backLeft = new CANSparkMax(4, MotorType.kBrushless);
 
         frontRight.setInverted(true);
         backLeft.follow(frontLeft);
@@ -118,22 +127,28 @@ public class Robot extends TimedRobot {
     }
 
     private Shooter setupShooter() {
-        TalonSRX motor = new TalonSRX(1);
-        TalonSRX follower = new TalonSRX(2);
+        CANSparkMax motor = new CANSparkMax(5, MotorType.kBrushless);
+        CANSparkMax follower = new CANSparkMax(6, MotorType.kBrushless);
 
-        motor.setInverted(true);
+        follower.follow(motor, true);
 
-        follower.follow(motor);
-        follower.setInverted(true);
-
-        Encoder encoder = new Encoder(0,1);
-
-        return new Shooter(encoder, motor);
+        return new Shooter(motor);
     }
 
     private Intake setupIntake() {
         TalonSRX motor = new TalonSRX(3);
 
         return new Intake(motor);
+    }
+
+    private Feeder setupFeeder() {
+        TalonSRX motor = new TalonSRX(1);
+        TalonSRX follower = new TalonSRX(2);
+
+        motor.setInverted(true);
+
+        follower.follow(motor);
+
+        return new Feeder(motor);
     }
 }
