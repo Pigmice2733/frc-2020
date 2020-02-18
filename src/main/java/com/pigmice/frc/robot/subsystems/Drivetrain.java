@@ -21,7 +21,7 @@ public class Drivetrain implements ISubsystem {
     private AHRS navx;
 
     private static final double wheelBase = 0.603;
-    private static final double drivetrainDistanceConversion = 13.2;
+    private static final double drivetrainDistanceConversion = 16.13;
 
     public Drivetrain(CANSparkMax leftDrive, CANSparkMax rightDrive, AHRS navx) {
         this.leftDrive = leftDrive;

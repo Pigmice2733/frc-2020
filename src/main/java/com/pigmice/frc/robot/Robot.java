@@ -15,6 +15,7 @@ import com.pigmice.frc.robot.subsystems.Shooter;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
+import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.TimedRobot;
 
@@ -44,7 +45,7 @@ public class Robot extends TimedRobot {
 
         subsystems.forEach((ISubsystem subsystem) -> subsystem.initialize());
 
-        autonomous = new Test(drivetrain);
+        autonomous = new Test(drivetrain, shooter, feeder, intake);
     }
 
     @Override
@@ -65,7 +66,14 @@ public class Robot extends TimedRobot {
     }
 
     @Override
+    public void teleopInit() {
+        subsystems.forEach((ISubsystem subsystem) -> subsystem.initialize());
+    }
+
+    @Override
     public void teleopPeriodic() {
+        controls.update();
+
         subsystems.forEach((ISubsystem subsystem) -> subsystem.updateInputs());
 
         if(controls.demoMode()) {
@@ -80,11 +88,15 @@ public class Robot extends TimedRobot {
             feeder.stop();
         }
 
+        intake.setPosition(controls.dropIntake());
+
         if (controls.intake()) {
             intake.go(0.6);
         } else {
             intake.go(0.0);
         }
+
+        shooter.setHood(controls.extendHood());
 
         if(controls.shoot()) {
             shooter.go();
@@ -132,13 +144,13 @@ public class Robot extends TimedRobot {
 
         follower.follow(motor, true);
 
-        return new Shooter(motor);
+        return new Shooter(motor, new DoubleSolenoid(0, 1));
     }
 
     private Intake setupIntake() {
         TalonSRX motor = new TalonSRX(3);
 
-        return new Intake(motor);
+        return new Intake(motor, new DoubleSolenoid(2, 3));
     }
 
     private Feeder setupFeeder() {

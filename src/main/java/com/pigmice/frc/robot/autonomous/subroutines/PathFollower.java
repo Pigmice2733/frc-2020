@@ -4,7 +4,6 @@ import com.pigmice.frc.lib.purepursuit.Path;
 import com.pigmice.frc.lib.purepursuit.PurePursuit;
 import com.pigmice.frc.lib.purepursuit.PurePursuit.Output;
 import com.pigmice.frc.lib.utils.Odometry.Pose;
-import com.pigmice.frc.lib.utils.Point;
 import com.pigmice.frc.robot.subsystems.Drivetrain;
 
 public class PathFollower implements ISubroutine {
@@ -21,16 +20,13 @@ public class PathFollower implements ISubroutine {
 
     public boolean update() {
         Pose pose = drivetrain.getPose();
+        Output output = controller.process(pose, 0.5);
 
-        double remainingDistance = new Point(pose).subtract(new Point(0.0, 3.0)).getMagnitude();
-        if(remainingDistance < 0.05) {
+        if(output.done) {
             return true;
         }
 
-        Output output = controller.process(pose, 1.0);
-        double velocity = output.velocity * 0.15;
-
-        drivetrain.curvatureDrive(velocity, output.curvature);
+        drivetrain.curvatureDrive(output.velocity * 0.2, output.curvature);
 
         return false;
     }
