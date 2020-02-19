@@ -54,7 +54,7 @@ public class Shooter implements ISubsystem {
     //private ShooterSetpoint targetRPM = new ShooterSetpoint(4000, 0.5);
     private ShooterSetpoint targetRPM = new ShooterSetpoint(6200, 0.85);
 
-    private boolean go = false;
+    private boolean runWheels = false;
 
     private final TakeBackHalf controller = new TakeBackHalf(0.5e-5, 0.8);
 
@@ -80,15 +80,12 @@ public class Shooter implements ISubsystem {
         updateDashboard();
     }
 
-    public void go() {
-        if(!go) {
-            go = true;
+    public void run(boolean run) {
+        if(run && !runWheels) {
             controller.initialize(shooterRPM, 1.0);
         }
-    }
 
-    public void stop() {
-        go = false;
+        runWheels = run;
     }
 
     public void setHood(boolean extend) {
@@ -113,12 +110,7 @@ public class Shooter implements ISubsystem {
 
     @Override
     public void updateOutputs() {
-        double output = 0.0;
-        if(go) {
-            output = controller.calculateOutput(shooterRPM, targetRPM);
-        } else {
-            output = 0.0;
-        }
+        double output = runWheels ? controller.calculateOutput(shooterRPM, targetRPM) : 0.0;
 
         shooterVoltage = output * 100.0;
         motor.set(output);

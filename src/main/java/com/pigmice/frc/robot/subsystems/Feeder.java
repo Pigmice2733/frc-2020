@@ -23,14 +23,12 @@ public class Feeder implements ISubsystem {
         runLift = false;
     }
 
-    public void feed() {
-        runHopper = true;
-        runLift = true;
+    public void runLift(boolean run) {
+        runLift = run;
     }
 
-    public void stop() {
-        runHopper = false;
-        runLift = false;
+    public void runHopper(boolean run) {
+        runHopper = run;
     }
 
     @Override

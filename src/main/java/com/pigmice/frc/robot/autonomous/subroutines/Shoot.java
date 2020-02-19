@@ -33,7 +33,7 @@ public class Shoot implements ISubroutine {
 
     @Override
     public boolean update() {
-        shooter.go();
+        shooter.run(true);
 
         if (!shooter.isReady() && !shooterStable) {
             shootingStarted = false;
@@ -52,14 +52,16 @@ public class Shoot implements ISubroutine {
         }
 
         if (shooterStable && Timer.getFPGATimestamp() - shooterReadyTime > shootingLength) {
-            shooter.stop();
-            feeder.stop();
+            shooter.run(false);
+            feeder.runLift(false);
+            feeder.runHopper(false);
 
             return true;
         }
 
         if (shooterStable) {
-            feeder.feed();
+            feeder.runLift(true);
+            feeder.runHopper(true);
         }
 
         return false;

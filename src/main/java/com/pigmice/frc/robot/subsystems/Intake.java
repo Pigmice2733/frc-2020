@@ -7,8 +7,15 @@ import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 
 public class Intake implements ISubsystem {
+    public enum Position {
+        DOWN,
+        UP
+    }
+
     private final TalonSRX motor;
     private final DoubleSolenoid solenoid;
+
+    private static final double wheelSpeed = 0.6;
 
     private double speed = 0.0;
     private Value targetPistonState = Value.kOff;
@@ -26,12 +33,12 @@ public class Intake implements ISubsystem {
         previousPistonState = targetPistonState;
     }
 
-    public void go(double speed) {
-        this.speed = speed;
+    public void run(boolean run) {
+        this.speed = run ? wheelSpeed : 0.0;
     }
 
-    public void setPosition(boolean down) {
-        targetPistonState = down ? Value.kReverse : Value.kForward;
+    public void setPosition(Position position) {
+        targetPistonState = (position == Position.DOWN) ? Value.kReverse : Value.kForward;
     }
 
     @Override

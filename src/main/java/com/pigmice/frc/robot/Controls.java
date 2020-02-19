@@ -1,55 +1,28 @@
 package com.pigmice.frc.robot;
 
-import com.pigmice.frc.lib.inputs.Debouncer;
-import com.pigmice.frc.lib.inputs.IBooleanSource;
-import com.pigmice.frc.lib.inputs.Toggle;
-
 import edu.wpi.first.wpilibj.Joystick;
 
 public class Controls {
-    private static class ButtonSource implements IBooleanSource {
-        public static interface Button {
-            public boolean get();
-        }
-
-        private final Button button;
-
-        public ButtonSource(Button button) {
-            this.button = button;
-        }
-
-        @Override
-        public boolean get() {
-            return button.get();
-        }
-
-        @Override
-        public void update() {
-        }
-
-    }
-
-    private interface ControllerProfile {
-        boolean demoMode();
+    private interface DriverProfile {
         double driveSpeed();
         double turnSpeed();
-        boolean intake();
+
         boolean shoot();
-        boolean feed();
-        boolean toggleIntake();
-        boolean toggleHood();
     }
 
-    private class EasySMX implements ControllerProfile {
+    private interface OperatorProfile {
+        boolean intake();
+        boolean feed();
+
+        boolean climbUp();
+        boolean climbDown();
+    }
+
+    private class EasySMX implements DriverProfile, OperatorProfile {
         private final Joystick joystick;
 
         public EasySMX(Joystick joystick) {
             this.joystick = joystick;
-        }
-
-        @Override
-        public boolean demoMode() {
-            return joystick.getRawButton(5);
         }
 
         @Override
@@ -78,26 +51,21 @@ public class Controls {
         }
 
         @Override
-        public boolean toggleIntake() {
-            return joystick.getRawButton(3);
+        public boolean climbUp() {
+            return joystick.getRawButton(1);
         }
 
         @Override
-        public boolean toggleHood() {
-            return joystick.getRawButton(3);
+        public boolean climbDown() {
+            return joystick.getRawButton(2);
         }
     }
 
-    private class XBox implements ControllerProfile {
+    private class XBox implements DriverProfile, OperatorProfile {
         private final Joystick joystick;
 
         public XBox(Joystick joystick) {
             this.joystick = joystick;
-        }
-
-        @Override
-        public boolean demoMode() {
-            return joystick.getRawButton(5);
         }
 
         @Override
@@ -126,83 +94,64 @@ public class Controls {
         }
 
         @Override
-        public boolean toggleIntake() {
+        public boolean climbUp() {
             return joystick.getRawButton(1);
         }
 
         @Override
-        public boolean toggleHood() {
-            return joystick.getRawButton(1);
+        public boolean climbDown() {
+            return joystick.getRawButton(2);
         }
     }
 
-    ControllerProfile controller;
-    Toggle intakeToggle;
-    Toggle hoodToggle;
-
-    Debouncer intakeDebouncer, hoodDebouncer;
+    DriverProfile driver;
+    OperatorProfile operator;
 
     public Controls() {
-        Joystick joystick = new Joystick(0);
+        Joystick driverJoystick = new Joystick(0);
+        Joystick operatorJoystick = new Joystick(1);
 
-        if(joystick.getName().equals("EasySMX CONTROLLER")) {
-            controller = new EasySMX(joystick);
-        } else if(joystick.getName().equals("Controller (XBOX 360 For Windows)")){
-            controller = new XBox(joystick);
+        if(driverJoystick.getName().equals("EasySMX CONTROLLER")) {
+            driver = new EasySMX(driverJoystick);
+        } else if(driverJoystick.getName().equals("Controller (XBOX 360 For Windows)")){
+            driver = new XBox(driverJoystick);
         } else {
-            controller = new XBox(joystick);
+            driver = new XBox(driverJoystick);
         }
 
-        intakeDebouncer = new Debouncer(new ButtonSource(controller::toggleIntake));
-        hoodDebouncer = new Debouncer(new ButtonSource(controller::toggleHood));
-
-        intakeToggle = new Toggle(intakeDebouncer);
-        hoodToggle = new Toggle(hoodDebouncer);
+        if (operatorJoystick.getName().equals("EasySMX CONTROLLER")) {
+            operator = new EasySMX(operatorJoystick);
+        } else if (operatorJoystick.getName().equals("Controller (XBOX 360 For Windows)")) {
+            operator = new XBox(operatorJoystick);
+        } else {
+            operator = new XBox(operatorJoystick);
+        }
     }
 
     public void initialize() {
-        intakeToggle.set(false);
-        hoodToggle.set(false);
     }
 
     public void update() {
-        intakeDebouncer.update();
-        hoodDebouncer.update();
-
-        intakeToggle.update();
-        hoodToggle.update();
     }
 
     public double turnSpeed() {
-        final double steering = controller.turnSpeed();
+        final double steering = driver.turnSpeed();
         return Math.pow(steering, 2) * Math.signum(steering);
     }
 
     public double driveSpeed() {
-        return -controller.driveSpeed();
-    }
-
-    public boolean demoMode() {
-        return false;
+        return -driver.driveSpeed();
     }
 
     public boolean intake() {
-        return controller.intake();
+        return operator.intake();
     }
 
     public boolean shoot() {
-        return controller.shoot();
+        return driver.shoot();
     }
 
     public boolean feed() {
-        return controller.feed();
-    }
-
-    public boolean extendHood() {
-        return hoodToggle.get();
-    }
-
-    public boolean dropIntake() {
-        return intakeToggle.get();
+        return operator.feed();
     }
 }

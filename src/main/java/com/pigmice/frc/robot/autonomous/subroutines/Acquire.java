@@ -1,35 +1,29 @@
 package com.pigmice.frc.robot.autonomous.subroutines;
 
-import com.pigmice.frc.robot.subsystems.Drivetrain;
 import com.pigmice.frc.robot.subsystems.Intake;
 
 public class Acquire implements ISubroutine {
     private final Intake intake;
-    private final Drive drive;
+    private final PathFollower path;
 
-    public Acquire(Intake intake, Drivetrain drivetrain) {
+    public Acquire(Intake intake, PathFollower path) {
         this.intake = intake;
-
-        drive = new Drive(drivetrain, -3.5);
+        this.path = path;
     }
 
     @Override
     public void initialize() {
-        drive.initialize();
+        path.initialize();
     }
 
     @Override
     public boolean update() {
-        intake.go(0.4);
-        intake.setPosition(true);
+        intake.setPosition(Intake.Position.DOWN);
 
-        boolean done = drive.update();
+        boolean done = path.update();
 
-        if(done) {
-            intake.go(0.0);
-        }
+        intake.run(!done);
 
         return done;
     }
-
 }

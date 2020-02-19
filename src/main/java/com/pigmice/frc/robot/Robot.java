@@ -76,33 +76,15 @@ public class Robot extends TimedRobot {
 
         subsystems.forEach((ISubsystem subsystem) -> subsystem.updateInputs());
 
-        if(controls.demoMode()) {
-            drivetrain.arcadeDrive(0.2 * controls.driveSpeed(), 0.2 * controls.turnSpeed());
-        } else {
-            drivetrain.arcadeDrive(controls.driveSpeed(), controls.turnSpeed());
-        }
+        drivetrain.arcadeDrive(controls.driveSpeed(), controls.turnSpeed());
 
-        if(controls.feed()) {
-            feeder.feed();
-        } else {
-            feeder.stop();
-        }
+        feeder.runHopper(controls.feed() || controls.intake());
+        feeder.runLift(controls.feed());
 
-        intake.setPosition(controls.dropIntake());
+        intake.run(controls.intake());
+        intake.setPosition(controls.intake() ? Intake.Position.DOWN : Intake.Position.UP);
 
-        if (controls.intake()) {
-            intake.go(0.6);
-        } else {
-            intake.go(0.0);
-        }
-
-        shooter.setHood(controls.extendHood());
-
-        if(controls.shoot()) {
-            shooter.go();
-        } else {
-            shooter.stop();
-        }
+        shooter.run(controls.shoot());
 
         subsystems.forEach((ISubsystem subsystem) -> subsystem.updateOutputs());
         subsystems.forEach((ISubsystem subsystem) -> subsystem.updateDashboard());
