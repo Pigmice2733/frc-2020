@@ -85,6 +85,7 @@ public class Robot extends TimedRobot {
         intake.setPosition(controls.intake() ? Intake.Position.DOWN : Intake.Position.UP);
 
         shooter.run(controls.shoot());
+        shooter.setHood(controls.extendHood());
 
         subsystems.forEach((ISubsystem subsystem) -> subsystem.updateOutputs());
         subsystems.forEach((ISubsystem subsystem) -> subsystem.updateDashboard());

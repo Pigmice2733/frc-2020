@@ -1,11 +1,11 @@
-package com.pigmice.frc.robot.autonomous.subroutines;
+package com.pigmice.frc.robot.autonomous.tasks;
 
 import com.pigmice.frc.robot.subsystems.Feeder;
 import com.pigmice.frc.robot.subsystems.Shooter;
 
 import edu.wpi.first.wpilibj.Timer;
 
-public class Shoot implements ISubroutine {
+public class Shoot implements ITask {
     private final Shooter shooter;
     private final Feeder feeder;
 

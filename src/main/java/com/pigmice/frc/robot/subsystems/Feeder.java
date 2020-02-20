@@ -8,7 +8,7 @@ public class Feeder implements ISubsystem {
     private final TalonSRX liftMotor;
 
     private final double hopperSpeed = 0.0; //0.15;
-    private final double liftSpeed = 0.35;
+    private final double liftSpeed = 0.65;
 
     private boolean runHopper = false, runLift = false;
 

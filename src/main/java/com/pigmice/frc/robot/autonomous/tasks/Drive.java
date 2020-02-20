@@ -1,4 +1,4 @@
-package com.pigmice.frc.robot.autonomous.subroutines;
+package com.pigmice.frc.robot.autonomous.tasks;
 
 import com.pigmice.frc.lib.controllers.PID;
 import com.pigmice.frc.lib.controllers.PIDGains;
@@ -10,7 +10,7 @@ import com.pigmice.frc.robot.subsystems.Drivetrain;
 
 import edu.wpi.first.wpilibj.Timer;
 
-public class Drive implements ISubroutine {
+public class Drive implements ITask {
     private ProfileExecutor executor;
     private PID drivingPID;
 

@@ -1,5 +1,8 @@
 package com.pigmice.frc.robot;
 
+import com.pigmice.frc.lib.inputs.Debouncer;
+import com.pigmice.frc.lib.inputs.Toggle;
+
 import edu.wpi.first.wpilibj.Joystick;
 
 public class Controls {
@@ -13,6 +16,8 @@ public class Controls {
     private interface OperatorProfile {
         boolean intake();
         boolean feed();
+
+        boolean extendHood();
 
         boolean climbUp();
         boolean climbDown();
@@ -59,6 +64,11 @@ public class Controls {
         public boolean climbDown() {
             return joystick.getRawButton(2);
         }
+
+        @Override
+        public boolean extendHood() {
+            return joystick.getRawButton(4);
+        }
     }
 
     private class XBox implements DriverProfile, OperatorProfile {
@@ -102,14 +112,22 @@ public class Controls {
         public boolean climbDown() {
             return joystick.getRawButton(2);
         }
+
+        @Override
+        public boolean extendHood() {
+            return joystick.getRawButton(4);
+        }
     }
 
     DriverProfile driver;
     OperatorProfile operator;
 
+    Debouncer debouncer;
+    Toggle hoodToggle;
+
     public Controls() {
         Joystick driverJoystick = new Joystick(0);
-        Joystick operatorJoystick = new Joystick(1);
+        Joystick operatorJoystick = driverJoystick; //new Joystick(1);
 
         if(driverJoystick.getName().equals("EasySMX CONTROLLER")) {
             driver = new EasySMX(driverJoystick);
@@ -126,12 +144,17 @@ public class Controls {
         } else {
             operator = new XBox(operatorJoystick);
         }
+
+        debouncer = new Debouncer(operator::extendHood);
+        hoodToggle = new Toggle(debouncer);
     }
 
     public void initialize() {
     }
 
     public void update() {
+        debouncer.update();
+        hoodToggle.update();
     }
 
     public double turnSpeed() {
@@ -153,5 +176,9 @@ public class Controls {
 
     public boolean feed() {
         return operator.feed();
+    }
+
+    public boolean extendHood() {
+        return hoodToggle.get();
     }
 }
