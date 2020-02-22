@@ -9,14 +9,17 @@ import com.pigmice.frc.robot.autonomous.Autonomous;
 import com.pigmice.frc.robot.autonomous.Test;
 import com.pigmice.frc.robot.subsystems.Drivetrain;
 import com.pigmice.frc.robot.subsystems.Feeder;
+import com.pigmice.frc.robot.subsystems.Feeder.LiftAction;
 import com.pigmice.frc.robot.subsystems.ISubsystem;
 import com.pigmice.frc.robot.subsystems.Intake;
 import com.pigmice.frc.robot.subsystems.Shooter;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
+import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Robot extends TimedRobot {
     private Drivetrain drivetrain;
@@ -44,7 +47,9 @@ public class Robot extends TimedRobot {
 
         subsystems.forEach((ISubsystem subsystem) -> subsystem.initialize());
 
-        autonomous = new Test(drivetrain);
+        autonomous = new Test(drivetrain, shooter, feeder, intake);
+
+        SmartDashboard.putString("Build", "0");
     }
 
     @Override
@@ -65,32 +70,26 @@ public class Robot extends TimedRobot {
     }
 
     @Override
+    public void teleopInit() {
+        subsystems.forEach((ISubsystem subsystem) -> subsystem.initialize());
+    }
+
+    @Override
     public void teleopPeriodic() {
+        controls.update();
+
         subsystems.forEach((ISubsystem subsystem) -> subsystem.updateInputs());
 
-        if(controls.demoMode()) {
-            drivetrain.arcadeDrive(0.4 * controls.driveSpeed(), 0.4 * controls.turnSpeed());
-        } else {
-            drivetrain.arcadeDrive(controls.driveSpeed(), controls.turnSpeed());
-        }
+        drivetrain.arcadeDrive(controls.driveSpeed(), controls.turnSpeed());
 
-        if(controls.feed()) {
-            feeder.go(0.4);
-        } else {
-            feeder.go(0.0);
-        }
+        feeder.runHopper(controls.feed() || controls.intake());
+        feeder.runLift(controls.feed() ? LiftAction.FEED : (controls.backFeed() ? LiftAction.BACKFEED : LiftAction.HOLD));
 
-        if (controls.intake()) {
-            intake.go(0.6);
-        } else {
-            intake.go(0.0);
-        }
+        intake.run(controls.intake());
+        intake.setPosition(controls.intake() ? Intake.Position.DOWN : Intake.Position.UP);
 
-        if(controls.shoot()) {
-            shooter.go();
-        } else {
-            shooter.stop();
-        }
+        shooter.run(controls.shoot());
+        shooter.setHood(controls.extendHood());
 
         subsystems.forEach((ISubsystem subsystem) -> subsystem.updateOutputs());
         subsystems.forEach((ISubsystem subsystem) -> subsystem.updateDashboard());
@@ -130,25 +129,32 @@ public class Robot extends TimedRobot {
         CANSparkMax motor = new CANSparkMax(5, MotorType.kBrushless);
         CANSparkMax follower = new CANSparkMax(6, MotorType.kBrushless);
 
+        motor.setInverted(false);
+
         follower.follow(motor, true);
 
-        return new Shooter(motor);
+        return new Shooter(motor, new DoubleSolenoid(0, 1));
     }
 
     private Intake setupIntake() {
-        TalonSRX motor = new TalonSRX(3);
-
-        return new Intake(motor);
-    }
-
-    private Feeder setupFeeder() {
-        TalonSRX motor = new TalonSRX(1);
-        TalonSRX follower = new TalonSRX(2);
+        TalonSRX motor = new TalonSRX(7);
 
         motor.setInverted(true);
 
-        follower.follow(motor);
+        return new Intake(motor, new DoubleSolenoid(2, 3));
+    }
 
-        return new Feeder(motor);
+    private Feeder setupFeeder() {
+        TalonSRX liftLeader = new TalonSRX(6);
+        TalonSRX liftFollower = new TalonSRX(3);
+        liftFollower.follow(liftLeader);
+        liftFollower.setInverted(true);
+
+        TalonSRX hopperLeader = new TalonSRX(2);
+        TalonSRX hopperFollower = new TalonSRX(5);
+        hopperFollower.follow(hopperLeader);
+        hopperFollower.setInverted(true);
+
+        return new Feeder(hopperLeader, liftLeader);
     }
 }

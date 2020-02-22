@@ -1,4 +1,4 @@
-package com.pigmice.frc.robot.autonomous.subroutines;
+package com.pigmice.frc.robot.autonomous.tasks;
 
 import com.pigmice.frc.lib.controllers.PID;
 import com.pigmice.frc.lib.controllers.PIDGains;
@@ -10,7 +10,7 @@ import com.pigmice.frc.robot.subsystems.Drivetrain;
 
 import edu.wpi.first.wpilibj.Timer;
 
-public class Drive implements ISubroutine {
+public class Drive implements ITask {
     private ProfileExecutor executor;
     private PID drivingPID;
 
@@ -18,22 +18,25 @@ public class Drive implements ISubroutine {
 
     private final double targetDistance;
     private Point initialPosition = Point.origin();
+    private final boolean reverse;
 
     public Drive(Drivetrain drivetrain, double meters) {
         this.drivetrain = drivetrain;
-        this.targetDistance = meters;
+        this.targetDistance = Math.abs(meters);
 
-        PIDGains gains = new PIDGains(0.5, 0.0, 0.0, 0.0, 0.15, 0.005);
-        Range outputBounds = new Range(-0.8, 0.8);
+        reverse = meters < 0.0;
+
+        PIDGains gains = new PIDGains(2.0, 0.0, 0.0, 0.0, 0.03, 0.005);
+        Range outputBounds = new Range(-0.5, 0.5);
         drivingPID = new PID(gains, outputBounds, 0.02);
     }
 
     public void initialize() {
         initialPosition = new Point(drivetrain.getPose());
 
-        StaticProfile profile = new StaticProfile(0.0, 0.0, targetDistance, 4, 6, 4);
-        executor = new ProfileExecutor(profile, drivingPID, this::output, this::getDistance,
-                                        0.0075 * 2 * Math.PI, 0.05, Timer::getFPGATimestamp);
+        StaticProfile profile = new StaticProfile(0.0, 0.0, targetDistance, 3, 2, 1.35);
+        executor = new ProfileExecutor(profile, drivingPID, this::output, this::getDistance, 0.05, 0.1,
+                Timer::getFPGATimestamp);
 
         drivingPID.initialize(0.0, 0.0);
         executor.initialize();
@@ -45,10 +48,11 @@ public class Drive implements ISubroutine {
 
     private double getDistance() {
         var currentPosition = new Point(drivetrain.getPose());
-        return currentPosition.subtract(initialPosition).getMagnitude();
+        return currentPosition.subtract(initialPosition).magnitude();
     }
 
     private void output(double output) {
+        output = reverse ? -output : output;
         drivetrain.tankDrive(output, output);
     }
 }

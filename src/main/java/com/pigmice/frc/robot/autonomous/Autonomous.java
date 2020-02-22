@@ -3,10 +3,10 @@ package com.pigmice.frc.robot.autonomous;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.pigmice.frc.robot.autonomous.subroutines.ISubroutine;
+import com.pigmice.frc.robot.autonomous.tasks.ITask;
 
 public abstract class Autonomous {
-    protected List<ISubroutine> subroutines = new ArrayList<>();
+    protected List<ITask> subroutines = new ArrayList<>();
     private int state = -1;
 
     public void initialize() {
@@ -27,6 +27,8 @@ public abstract class Autonomous {
                 state++;
                 if (state < subroutines.size()) {
                     subroutines.get(state).initialize();
+                } else {
+                    System.out.println("Auto done");
                 }
             }
         }

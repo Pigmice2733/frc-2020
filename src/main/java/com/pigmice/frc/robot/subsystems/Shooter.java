@@ -5,6 +5,8 @@ import com.pigmice.frc.lib.motion.setpoint.ISetpoint;
 import com.revrobotics.CANEncoder;
 import com.revrobotics.CANSparkMax;
 
+import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Shooter implements ISubsystem {
@@ -40,30 +42,37 @@ public class Shooter implements ISubsystem {
 
     private final CANSparkMax motor;
     private final CANEncoder encoder;
+    private DoubleSolenoid hoodSolenoid;
 
     private final double reduction = 1.0/1.5;
 
     private double shooterRPM = 0.0;
     private double shooterVoltage = 0.0;
+    private Value hoodState = Value.kOff;
+    private Value previousHoodState = Value.kOff;
 
-    //private ShooterSetpoint targetRPM = new ShooterSetpoint(4150, 0.8);
-    private ShooterSetpoint targetRPM = new ShooterSetpoint(2700, 0.5);
+    //private ShooterSetpoint targetRPM = new ShooterSetpoint(4000, 0.5);
+    private ShooterSetpoint targetRPM = new ShooterSetpoint(6200, 0.85);
 
-    private boolean go = false;
+    private boolean runWheels = false;
 
     private final TakeBackHalf controller = new TakeBackHalf(0.5e-5, 0.8);
 
-    public Shooter(CANSparkMax motor) {
+    public Shooter(CANSparkMax motor, DoubleSolenoid hoodSolenoid) {
         this.motor = motor;
+        this.hoodSolenoid = hoodSolenoid;
         encoder = motor.getEncoder();
 
-        encoder.setVelocityConversionFactor(-1.0/reduction);
+        encoder.setVelocityConversionFactor(1.0/reduction);
     }
 
     @Override
     public void initialize() {
         shooterRPM = 0.0;
         shooterVoltage = 0.0;
+        hoodState = hoodSolenoid.get();
+        previousHoodState = hoodState;
+
         controller.updateTargetOutput(targetRPM.output);
         controller.initialize(0.0, 1.0);
 
@@ -71,21 +80,27 @@ public class Shooter implements ISubsystem {
         updateDashboard();
     }
 
-    public void go() {
-        if(!go) {
-            go = true;
+    public void run(boolean run) {
+        if(run && !runWheels) {
             controller.initialize(shooterRPM, 1.0);
         }
+
+        runWheels = run;
     }
 
-    public void stop() {
-        go = false;
+    public void setHood(boolean extend) {
+        hoodState = extend ? Value.kForward : Value.kReverse;
+    }
+
+    public boolean isReady() {
+        return Math.abs((shooterRPM - targetRPM.rpm) / targetRPM.rpm) < 0.01;
     }
 
     @Override
     public void updateDashboard() {
         SmartDashboard.putNumber("Shooter RPM", shooterRPM);
         SmartDashboard.putNumber("Shooter Voltage", shooterVoltage);
+        SmartDashboard.putBoolean("Shooter Ready", isReady());
     }
 
     @Override
@@ -95,15 +110,15 @@ public class Shooter implements ISubsystem {
 
     @Override
     public void updateOutputs() {
-        double output = 0.0;
-        if(go) {
-            output = controller.calculateOutput(shooterRPM, targetRPM);
-        } else {
-            output = 0.0;
-        }
+        double output = runWheels ? controller.calculateOutput(shooterRPM, targetRPM) : 0.0;
 
         shooterVoltage = output * 100.0;
         motor.set(output);
+
+        if(hoodState != previousHoodState) {
+            hoodSolenoid.set(hoodState);
+            previousHoodState = hoodState;
+        }
     }
 
     @Override

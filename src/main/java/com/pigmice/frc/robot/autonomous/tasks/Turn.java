@@ -1,4 +1,4 @@
-package com.pigmice.frc.robot.autonomous.subroutines;
+package com.pigmice.frc.robot.autonomous.tasks;
 
 import com.pigmice.frc.lib.controllers.PID;
 import com.pigmice.frc.lib.controllers.PIDGains;
@@ -9,7 +9,7 @@ import com.pigmice.frc.robot.subsystems.Drivetrain;
 
 import edu.wpi.first.wpilibj.Timer;
 
-public class Turn implements ISubroutine {
+public class Turn implements ITask {
     private ProfileExecutor executor;
     private PID turningPID;
 
@@ -29,23 +29,22 @@ public class Turn implements ISubroutine {
         this.targetRotation = radians;
         this.absolute = absolute;
 
-        PIDGains gains = new PIDGains(0.25, 0.5, 0.0, 0.0, 0.44/(2*Math.PI), 0.008);
+        PIDGains gains = new PIDGains(0.0, 0.0, 0.0, 0.0, 0.6 / (2 * Math.PI), 0.00135);
         Range outputBounds = new Range(-0.8, 0.8);
         turningPID = new PID(gains, outputBounds, 0.02);
     }
 
     public void initialize() {
-        initialAngle = drivetrain.getHeading();
-
         if (absolute) {
             targetAngle = targetRotation;
         } else {
             targetAngle = initialAngle + targetRotation;
         }
 
-        StaticProfile profile = new StaticProfile(0.0, initialAngle, targetAngle, 8*Math.PI, 2.5*Math.PI, 2.0*Math.PI);
+        StaticProfile profile = new StaticProfile(0.0, initialAngle, targetAngle,
+                2.0 * Math.PI, 1.5 * Math.PI, 1.25 * Math.PI);
         executor = new ProfileExecutor(profile, turningPID, this::driveOutput, this::getAngle,
-                                        0.02, 0.05, Timer::getFPGATimestamp);
+                0.02, 0.05, Timer::getFPGATimestamp);
 
         turningPID.initialize(0.0, 0.0);
         executor.initialize();

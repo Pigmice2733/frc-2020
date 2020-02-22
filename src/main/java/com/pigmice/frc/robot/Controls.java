@@ -1,27 +1,34 @@
 package com.pigmice.frc.robot;
 
+import com.pigmice.frc.lib.inputs.Debouncer;
+import com.pigmice.frc.lib.inputs.Toggle;
+
 import edu.wpi.first.wpilibj.Joystick;
 
 public class Controls {
-    private interface ControllerProfile {
-        boolean demoMode();
+    private interface DriverProfile {
         double driveSpeed();
         double turnSpeed();
-        boolean intake();
+
         boolean shoot();
-        boolean feed();
     }
 
-    private class EasySMX implements ControllerProfile {
+    private interface OperatorProfile {
+        boolean intake();
+        boolean feed();
+        boolean backFeed();
+
+        boolean extendHood();
+
+        boolean climbUp();
+        boolean climbDown();
+    }
+
+    private class EasySMX implements DriverProfile, OperatorProfile {
         private final Joystick joystick;
 
         public EasySMX(Joystick joystick) {
             this.joystick = joystick;
-        }
-
-        @Override
-        public boolean demoMode() {
-            return joystick.getRawButton(5);
         }
 
         @Override
@@ -48,18 +55,33 @@ public class Controls {
         public boolean feed() {
             return joystick.getRawButton(6);
         }
+
+        @Override
+        public boolean backFeed() {
+            return joystick.getRawButton(5);
+        }
+
+        @Override
+        public boolean climbUp() {
+            return joystick.getRawButton(1);
+        }
+
+        @Override
+        public boolean climbDown() {
+            return joystick.getRawButton(2);
+        }
+
+        @Override
+        public boolean extendHood() {
+            return joystick.getRawButton(4);
+        }
     }
 
-    private class XBox implements ControllerProfile {
+    private class XBox implements DriverProfile, OperatorProfile {
         private final Joystick joystick;
 
         public XBox(Joystick joystick) {
             this.joystick = joystick;
-        }
-
-        @Override
-        public boolean demoMode() {
-            return joystick.getRawButton(5);
         }
 
         @Override
@@ -86,50 +108,92 @@ public class Controls {
         public boolean feed() {
             return joystick.getRawButton(6);
         }
+
+        @Override
+        public boolean backFeed() {
+            return joystick.getRawButton(5);
+        }
+
+        @Override
+        public boolean climbUp() {
+            return joystick.getRawButton(1);
+        }
+
+        @Override
+        public boolean climbDown() {
+            return joystick.getRawButton(2);
+        }
+
+        @Override
+        public boolean extendHood() {
+            return joystick.getRawButton(4);
+        }
     }
 
-    ControllerProfile controller;
+    DriverProfile driver;
+    OperatorProfile operator;
+
+    Debouncer debouncer;
+    Toggle hoodToggle;
 
     public Controls() {
-        Joystick joystick = new Joystick(0);
+        Joystick driverJoystick = new Joystick(0);
+        Joystick operatorJoystick = driverJoystick; // new Joystick(1);
 
-        if(joystick.getName().equals("EasySMX CONTROLLER")) {
-            controller = new EasySMX(joystick);
-        } else if(joystick.getName().equals("Controller (XBOX 360 For Windows)")){
-            controller = new XBox(joystick);
+        if (driverJoystick.getName().equals("EasySMX CONTROLLER")) {
+            driver = new EasySMX(driverJoystick);
+        } else if (driverJoystick.getName().equals("Controller (XBOX 360 For Windows)")) {
+            driver = new XBox(driverJoystick);
         } else {
-            controller = new XBox(joystick);
+            driver = new XBox(driverJoystick);
         }
+
+        if (operatorJoystick.getName().equals("EasySMX CONTROLLER")) {
+            operator = new EasySMX(operatorJoystick);
+        } else if (operatorJoystick.getName().equals("Controller (XBOX 360 For Windows)")) {
+            operator = new XBox(operatorJoystick);
+        } else {
+            operator = new XBox(operatorJoystick);
+        }
+
+        debouncer = new Debouncer(operator::extendHood);
+        hoodToggle = new Toggle(debouncer);
     }
 
     public void initialize() {
     }
 
     public void update() {
+        debouncer.update();
+        hoodToggle.update();
     }
 
     public double turnSpeed() {
-        final double steering = controller.turnSpeed();
+        final double steering = driver.turnSpeed();
         return Math.pow(steering, 2) * Math.signum(steering);
     }
 
     public double driveSpeed() {
-        return -controller.driveSpeed();
-    }
-
-    public boolean demoMode() {
-        return !controller.demoMode();
+        return -driver.driveSpeed();
     }
 
     public boolean intake() {
-        return controller.intake();
+        return operator.intake();
     }
 
     public boolean shoot() {
-        return controller.shoot();
+        return driver.shoot();
     }
 
     public boolean feed() {
-        return controller.feed();
+        return operator.feed();
+    }
+
+    public boolean backFeed() {
+        return operator.backFeed();
+    }
+
+    public boolean extendHood() {
+        return hoodToggle.get();
     }
 }
