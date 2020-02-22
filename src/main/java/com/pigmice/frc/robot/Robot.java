@@ -39,6 +39,8 @@ public class Robot extends TimedRobot {
 
     @Override
     public void robotInit() {
+        displayDeployTimestamp();
+
         drivetrain = setupDrivetrain();
         shooter = setupShooter();
         feeder = setupFeeder();
@@ -117,7 +119,7 @@ public class Robot extends TimedRobot {
         Properties properties = new Properties();
 
         try {
-            Path filePath = Filesystem.getDeployDirectory().toPath().resolve("/deployTimestamp.properties");
+            Path filePath = Filesystem.getDeployDirectory().toPath().resolve("deployTimestamp.properties");
             file = new FileInputStream(filePath.toFile());
             properties.load(file);
         } catch(Exception e) {
