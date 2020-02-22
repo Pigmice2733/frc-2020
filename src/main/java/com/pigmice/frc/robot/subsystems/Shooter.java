@@ -76,7 +76,6 @@ public class Shooter implements ISubsystem {
         controller.updateTargetOutput(targetRPM.output);
         controller.initialize(0.0, 1.0);
 
-        SmartDashboard.putNumber("Shooter target", 0.0);
         updateDashboard();
     }
 
