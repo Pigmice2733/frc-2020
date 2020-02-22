@@ -16,6 +16,7 @@ public class Controls {
     private interface OperatorProfile {
         boolean intake();
         boolean feed();
+        boolean backFeed();
 
         boolean extendHood();
 
@@ -53,6 +54,11 @@ public class Controls {
         @Override
         public boolean feed() {
             return joystick.getRawButton(6);
+        }
+
+        @Override
+        public boolean backFeed() {
+            return joystick.getRawButton(5);
         }
 
         @Override
@@ -104,6 +110,11 @@ public class Controls {
         }
 
         @Override
+        public boolean backFeed() {
+            return joystick.getRawButton(5);
+        }
+
+        @Override
         public boolean climbUp() {
             return joystick.getRawButton(1);
         }
@@ -127,11 +138,11 @@ public class Controls {
 
     public Controls() {
         Joystick driverJoystick = new Joystick(0);
-        Joystick operatorJoystick = driverJoystick; //new Joystick(1);
+        Joystick operatorJoystick = driverJoystick; // new Joystick(1);
 
-        if(driverJoystick.getName().equals("EasySMX CONTROLLER")) {
+        if (driverJoystick.getName().equals("EasySMX CONTROLLER")) {
             driver = new EasySMX(driverJoystick);
-        } else if(driverJoystick.getName().equals("Controller (XBOX 360 For Windows)")){
+        } else if (driverJoystick.getName().equals("Controller (XBOX 360 For Windows)")) {
             driver = new XBox(driverJoystick);
         } else {
             driver = new XBox(driverJoystick);
@@ -176,6 +187,10 @@ public class Controls {
 
     public boolean feed() {
         return operator.feed();
+    }
+
+    public boolean backFeed() {
+        return operator.backFeed();
     }
 
     public boolean extendHood() {

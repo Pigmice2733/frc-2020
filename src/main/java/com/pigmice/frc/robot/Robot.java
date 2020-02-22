@@ -9,6 +9,7 @@ import com.pigmice.frc.robot.autonomous.Autonomous;
 import com.pigmice.frc.robot.autonomous.Test;
 import com.pigmice.frc.robot.subsystems.Drivetrain;
 import com.pigmice.frc.robot.subsystems.Feeder;
+import com.pigmice.frc.robot.subsystems.Feeder.LiftAction;
 import com.pigmice.frc.robot.subsystems.ISubsystem;
 import com.pigmice.frc.robot.subsystems.Intake;
 import com.pigmice.frc.robot.subsystems.Shooter;
@@ -18,6 +19,7 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Robot extends TimedRobot {
     private Drivetrain drivetrain;
@@ -46,6 +48,8 @@ public class Robot extends TimedRobot {
         subsystems.forEach((ISubsystem subsystem) -> subsystem.initialize());
 
         autonomous = new Test(drivetrain, shooter, feeder, intake);
+
+        SmartDashboard.putString("Build", "0");
     }
 
     @Override
@@ -79,7 +83,7 @@ public class Robot extends TimedRobot {
         drivetrain.arcadeDrive(controls.driveSpeed(), controls.turnSpeed());
 
         feeder.runHopper(controls.feed() || controls.intake());
-        feeder.runLift(controls.feed());
+        feeder.runLift(controls.feed() ? LiftAction.FEED : (controls.backFeed() ? LiftAction.BACKFEED : LiftAction.HOLD));
 
         intake.run(controls.intake());
         intake.setPosition(controls.intake() ? Intake.Position.DOWN : Intake.Position.UP);
@@ -125,24 +129,28 @@ public class Robot extends TimedRobot {
         CANSparkMax motor = new CANSparkMax(5, MotorType.kBrushless);
         CANSparkMax follower = new CANSparkMax(6, MotorType.kBrushless);
 
+        motor.setInverted(false);
+
         follower.follow(motor, true);
 
         return new Shooter(motor, new DoubleSolenoid(0, 1));
     }
 
     private Intake setupIntake() {
-        TalonSRX motor = new TalonSRX(3);
+        TalonSRX motor = new TalonSRX(7);
+
+        motor.setInverted(true);
 
         return new Intake(motor, new DoubleSolenoid(2, 3));
     }
 
     private Feeder setupFeeder() {
-        TalonSRX liftLeader = new TalonSRX(1);
-        TalonSRX liftFollower = new TalonSRX(2);
+        TalonSRX liftLeader = new TalonSRX(6);
+        TalonSRX liftFollower = new TalonSRX(3);
         liftFollower.follow(liftLeader);
         liftFollower.setInverted(true);
 
-        TalonSRX hopperLeader = new TalonSRX(4);
+        TalonSRX hopperLeader = new TalonSRX(2);
         TalonSRX hopperFollower = new TalonSRX(5);
         hopperFollower.follow(hopperLeader);
         hopperFollower.setInverted(true);
