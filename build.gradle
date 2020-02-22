@@ -25,6 +25,13 @@ deploy {
             directory = '/home/lvuser/deploy'
         }
     }
+
+    def deployTimestampFile = file('src/main/deploy/deployTimestamp.properties')
+
+    def Properties deployTimestamp = new Properties()
+    deployTimestamp['DEPLOY_TIMESTAMP'] = new Date().format('HH:mm:ss')
+    deployTimestamp.store(deployTimestampFile.newWriter(), null)
+    logger.info('Writing deploy timestamp')
 }
 
 def includeDesktopSupport = false

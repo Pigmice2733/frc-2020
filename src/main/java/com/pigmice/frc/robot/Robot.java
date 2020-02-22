@@ -1,7 +1,10 @@
 package com.pigmice.frc.robot;
 
+import java.io.FileInputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.kauailabs.navx.frc.AHRS;
@@ -17,6 +20,7 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -48,8 +52,6 @@ public class Robot extends TimedRobot {
         subsystems.forEach((ISubsystem subsystem) -> subsystem.initialize());
 
         autonomous = new Test(drivetrain, shooter, feeder, intake);
-
-        SmartDashboard.putString("Build", "0");
     }
 
     @Override
@@ -108,6 +110,22 @@ public class Robot extends TimedRobot {
     public void disabledPeriodic() {
         subsystems.forEach((ISubsystem subsystem) -> subsystem.updateInputs());
         subsystems.forEach((ISubsystem subsystem) -> subsystem.updateDashboard());
+    }
+
+    public void displayDeployTimestamp() {
+        FileInputStream file;
+        Properties properties = new Properties();
+
+        try {
+            Path filePath = Filesystem.getDeployDirectory().toPath().resolve("/deployTimestamp.properties");
+            file = new FileInputStream(filePath.toFile());
+            properties.load(file);
+        } catch(Exception e) {
+            SmartDashboard.putString("Deploy Timestamp", "none");
+            return;
+        }
+
+        SmartDashboard.putString("Deploy Timestamp", properties.getProperty("DEPLOY_TIMESTAMP"));
     }
 
     public Drivetrain setupDrivetrain() {
