@@ -3,18 +3,20 @@ package com.pigmice.frc.robot;
 import com.pigmice.frc.lib.inputs.Debouncer;
 import com.pigmice.frc.lib.inputs.Toggle;
 
-import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.GenericHID.Hand;
+import edu.wpi.first.wpilibj.XboxController;
 
 public class Controls {
     private interface DriverProfile {
         double driveSpeed();
         double turnSpeed();
-
-        boolean shoot();
     }
 
     private interface OperatorProfile {
+        boolean shoot();
+
         boolean intake();
+
         boolean feed();
         boolean backFeed();
 
@@ -25,108 +27,108 @@ public class Controls {
     }
 
     private class EasySMX implements DriverProfile, OperatorProfile {
-        private final Joystick joystick;
+        private final XboxController joystick;
 
-        public EasySMX(Joystick joystick) {
+        public EasySMX(XboxController joystick) {
             this.joystick = joystick;
         }
 
         @Override
         public double driveSpeed() {
-            return joystick.getRawAxis(1);
+            return joystick.getY(Hand.kLeft);
         }
 
         @Override
         public double turnSpeed() {
-            return joystick.getRawAxis(2);
+            return joystick.getX(Hand.kRight);
         }
 
         @Override
         public boolean intake() {
-            return joystick.getRawButton(3);
-        }
-
-        @Override
-        public boolean shoot() {
             return joystick.getRawButton(8);
         }
 
         @Override
+        public boolean shoot() {
+            return joystick.getRawButton(7);
+        }
+
+        @Override
         public boolean feed() {
-            return joystick.getRawButton(6);
+            return joystick.getBumper(Hand.kRight);
         }
 
         @Override
         public boolean backFeed() {
-            return joystick.getRawButton(5);
+            return joystick.getBumper(Hand.kLeft);
         }
 
         @Override
         public boolean climbUp() {
-            return joystick.getRawButton(1);
+            return joystick.getPOV() == 0;
         }
 
         @Override
         public boolean climbDown() {
-            return joystick.getRawButton(2);
+            return joystick.getPOV() == 180;
         }
 
         @Override
         public boolean extendHood() {
-            return joystick.getRawButton(4);
+            return joystick.getYButton();
         }
     }
 
     private class XBox implements DriverProfile, OperatorProfile {
-        private final Joystick joystick;
+        private final XboxController joystick;
 
-        public XBox(Joystick joystick) {
+        public XBox(XboxController joystick) {
             this.joystick = joystick;
         }
 
         @Override
         public double driveSpeed() {
-            return joystick.getRawAxis(1);
+            return joystick.getY(Hand.kLeft);
         }
 
         @Override
         public double turnSpeed() {
-            return joystick.getRawAxis(4);
+            return joystick.getX(Hand.kRight);
         }
 
         @Override
         public boolean intake() {
-            return joystick.getRawButton(3);
+            return joystick.getTriggerAxis(Hand.kRight) > 0.5;
         }
 
         @Override
         public boolean shoot() {
-            return joystick.getRawAxis(3) > 0.75;
+            return joystick.getTriggerAxis(Hand.kLeft) > 0.5;
         }
 
         @Override
         public boolean feed() {
-            return joystick.getRawButton(6);
+            return joystick.getBumper(Hand.kRight);
         }
 
         @Override
         public boolean backFeed() {
-            return joystick.getRawButton(5);
+            return joystick.getBumper(Hand.kLeft);
         }
 
         @Override
         public boolean climbUp() {
-            return joystick.getRawButton(1);
+            return joystick.getPOV() == 0;
         }
 
         @Override
         public boolean climbDown() {
-            return joystick.getRawButton(2);
+            return joystick.getPOV() == 180;
         }
 
         @Override
         public boolean extendHood() {
-            return joystick.getRawButton(4);
+            return joystick.getYButton();
         }
     }
 
@@ -137,8 +139,8 @@ public class Controls {
     Toggle hoodToggle;
 
     public Controls() {
-        Joystick driverJoystick = new Joystick(0);
-        Joystick operatorJoystick = driverJoystick; // new Joystick(1);
+        XboxController driverJoystick = new XboxController(0);
+        XboxController operatorJoystick = new XboxController(1);
 
         if (driverJoystick.getName().equals("EasySMX CONTROLLER")) {
             driver = new EasySMX(driverJoystick);
@@ -150,7 +152,7 @@ public class Controls {
 
         if (operatorJoystick.getName().equals("EasySMX CONTROLLER")) {
             operator = new EasySMX(operatorJoystick);
-        } else if (operatorJoystick.getName().equals("Controller (XBOX 360 For Windows)")) {
+        } else if (driverJoystick.getName().equals("Controller (XBOX 360 For Windows)")) {
             operator = new XBox(operatorJoystick);
         } else {
             operator = new XBox(operatorJoystick);
@@ -182,7 +184,7 @@ public class Controls {
     }
 
     public boolean shoot() {
-        return driver.shoot();
+        return operator.shoot();
     }
 
     public boolean feed() {
@@ -195,5 +197,13 @@ public class Controls {
 
     public boolean extendHood() {
         return hoodToggle.get();
+    }
+
+    public boolean climbUp() {
+        return operator.climbUp();
+    }
+
+    public boolean climbDown() {
+        return operator.climbDown();
     }
 }

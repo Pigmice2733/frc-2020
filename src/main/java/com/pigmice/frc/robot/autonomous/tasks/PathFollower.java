@@ -49,11 +49,14 @@ public class PathFollower implements ITask {
     private final double kV = 0.2;
     private final double kA = 0.05;
 
-    public PathFollower(Drivetrain drivetrain, Path path, boolean backwards) {
-        controller = new PurePursuit(path);
+    private final double lookahead;
+
+    public PathFollower(Drivetrain drivetrain, Path path, boolean backwards, double lookahead) {
+        controller = new PurePursuit(path, 7e-2);
         actions = new ArrayList<>();
         this.backwards = backwards;
         this.drivetrain = drivetrain;
+        this.lookahead = lookahead;
     }
 
     public void addAction(int startSegment, int endSegment, IAction action) {
@@ -68,10 +71,17 @@ public class PathFollower implements ITask {
 
     public boolean update() {
         Pose pose = drivetrain.getPose();
-        pose = new Pose(pose.getX(), pose.getY(), (pose.getHeading() + Math.PI) % (2*Math.PI));
-        Output output = controller.process(pose, 0.5);
+        double heading = backwards ? (pose.getHeading() + Math.PI) % (2*Math.PI) : pose.getHeading();
+        pose = new Pose(pose.getX(), pose.getY(), heading);
+        Output output = controller.process(pose, lookahead);
 
         if(output.atEnd) {
+            for (ActionSegment segment : actions) {
+                if (segment.isActive()) {
+                    segment.disable();
+                }
+            }
+
             return true;
         }
 
@@ -89,8 +99,9 @@ public class PathFollower implements ITask {
 
         double outputPower = kV * output.velocity + kA * output.acceleration;
         outputPower = backwards ? -outputPower : outputPower;
+        double curvature = backwards ? -output.curvature  : output.curvature;
 
-        drivetrain.curvatureDrive(outputPower, output.curvature);
+        drivetrain.curvatureDrive(outputPower, curvature);
 
         return false;
     }
