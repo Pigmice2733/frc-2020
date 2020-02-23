@@ -9,7 +9,9 @@ import java.util.Properties;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.kauailabs.navx.frc.AHRS;
 import com.pigmice.frc.robot.autonomous.Autonomous;
-import com.pigmice.frc.robot.autonomous.Test;
+import com.pigmice.frc.robot.autonomous.LeaveLine;
+import com.pigmice.frc.robot.autonomous.TrenchFiveBall;
+import com.pigmice.frc.robot.autonomous.TrenchSixBall;
 import com.pigmice.frc.robot.subsystems.Drivetrain;
 import com.pigmice.frc.robot.subsystems.Feeder;
 import com.pigmice.frc.robot.subsystems.Feeder.LiftAction;
@@ -36,6 +38,7 @@ public class Robot extends TimedRobot {
 
     private final Controls controls = new Controls();
 
+    private List<Autonomous> autoRoutines = new ArrayList<>();
     private Autonomous autonomous;
 
     @Override
@@ -54,13 +57,17 @@ public class Robot extends TimedRobot {
 
         subsystems.forEach((ISubsystem subsystem) -> subsystem.initialize());
 
-        autonomous = new Test(drivetrain, shooter, feeder, intake);
+        autoRoutines.add(new TrenchSixBall(drivetrain, shooter, feeder, intake));
+        autoRoutines.add(new TrenchFiveBall(drivetrain, shooter, feeder, intake));
+        autoRoutines.add(new LeaveLine(drivetrain));
+        Autonomous.setOptions(autoRoutines);
     }
 
     @Override
     public void autonomousInit() {
         subsystems.forEach((ISubsystem subsystem) -> subsystem.initialize());
 
+        autonomous = Autonomous.getSelected();
         autonomous.initialize();
     }
 
@@ -88,12 +95,13 @@ public class Robot extends TimedRobot {
         drivetrain.arcadeDrive(controls.driveSpeed(), controls.turnSpeed());
 
         feeder.runHopper(controls.feed() || controls.intake());
-        feeder.runLift(controls.feed() ? LiftAction.FEED : (controls.backFeed() ? LiftAction.BACKFEED : LiftAction.HOLD));
+        feeder.runLift(
+                controls.feed() ? LiftAction.FEED : (controls.backFeed() ? LiftAction.BACKFEED : LiftAction.HOLD));
 
         intake.run(controls.intake());
         intake.setPosition(controls.intake() ? Intake.Position.DOWN : Intake.Position.UP);
 
-        shooter.run(controls.shoot() ? Action.SHOOT : Action.HOLD);
+        shooter.run(controls.shoot() ? Action.LONG_SHOT : Action.HOLD);
         shooter.setHood(controls.extendHood());
 
         subsystems.forEach((ISubsystem subsystem) -> subsystem.updateOutputs());
@@ -123,7 +131,7 @@ public class Robot extends TimedRobot {
             Path filePath = Filesystem.getDeployDirectory().toPath().resolve("deployTimestamp.properties");
             file = new FileInputStream(filePath.toFile());
             properties.load(file);
-        } catch(Exception e) {
+        } catch (Exception e) {
             SmartDashboard.putString("Deploy Timestamp", "none");
             return;
         }

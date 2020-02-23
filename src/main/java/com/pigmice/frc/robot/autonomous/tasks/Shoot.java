@@ -29,7 +29,7 @@ public class Shoot implements ITask {
 
     @Override
     public boolean update() {
-        shooter.run(Action.SHOOT);
+        shooter.run(Action.SHORT_SHOT);
 
         if (shooter.isReady() && !shootingStarted) {
             shootingStarted = true;

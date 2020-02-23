@@ -16,8 +16,8 @@ import com.pigmice.frc.robot.subsystems.Feeder;
 import com.pigmice.frc.robot.subsystems.Intake;
 import com.pigmice.frc.robot.subsystems.Shooter;
 
-public class Test extends Autonomous {
-    public Test(Drivetrain drivetrain, Shooter shooter, Feeder feeder, Intake intake) {
+public class TrenchSixBall extends Autonomous {
+    public TrenchSixBall(Drivetrain drivetrain, Shooter shooter, Feeder feeder, Intake intake) {
         PathFollower acquisition = constructAcquisition(drivetrain, intake, feeder);
         PathFollower returnAndSpinUp = constructReturnPath(drivetrain, shooter, intake, feeder);
 
@@ -27,6 +27,10 @@ public class Test extends Autonomous {
 
     public void initialize() {
         super.initialize();
+    }
+
+    public String name() {
+        return "Trench Six Ball";
     }
 
     public static PathFollower constructAcquisition(Drivetrain drivetrain, Intake intake, Feeder feeder) {

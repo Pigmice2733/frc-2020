@@ -2,15 +2,11 @@ package com.pigmice.frc.robot.autonomous.actions;
 
 import com.pigmice.frc.robot.subsystems.Feeder;
 import com.pigmice.frc.robot.subsystems.Feeder.LiftAction;
-import com.pigmice.frc.robot.subsystems.Shooter;
-import com.pigmice.frc.robot.subsystems.Shooter.Action;
 
-public class SpinUp implements IAction {
-    private final Shooter shooter;
+public class BackFeed implements IAction {
     private final Feeder feeder;
 
-    public SpinUp(Shooter shooter, Feeder feeder) {
-        this.shooter = shooter;
+    public BackFeed(Feeder feeder) {
         this.feeder = feeder;
     }
 
@@ -20,7 +16,6 @@ public class SpinUp implements IAction {
 
     @Override
     public void update() {
-        shooter.run(Action.SHORT_SHOT);
         feeder.runLift(LiftAction.BACKFEED);
     }
 

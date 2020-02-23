@@ -41,9 +41,21 @@ public class Shooter implements ISubsystem {
     }
 
     public enum Action {
-        SHOOT,
-        CLEAR,
-        HOLD
+        LONG_SHOT(7000, 0.87, true),
+        MEDIUM_SHOT(5200, 0.65, true),
+        SHORT_SHOT(4000, 0.5, true),
+        CLEAR(-100, -0.1, false),
+        HOLD(0, 0, false);
+
+        private final double rpm;
+        private final double voltage;
+        private final boolean closedLoop;
+
+        private Action(double rpm, double voltage, boolean closedLoop) {
+            this.rpm = rpm;
+            this.voltage = voltage;
+            this.closedLoop = closedLoop;
+        }
     }
 
     private final CANSparkMax motor;
@@ -57,7 +69,6 @@ public class Shooter implements ISubsystem {
     private Value hoodState = Value.kOff;
     private Value previousHoodState = Value.kOff;
 
-    //private ShooterSetpoint targetRPM = new ShooterSetpoint(4000, 0.5);
     private ShooterSetpoint targetRPM = new ShooterSetpoint(5200, 0.5);
 
     private Action action = Action.HOLD;
@@ -84,12 +95,11 @@ public class Shooter implements ISubsystem {
         controller.updateTargetOutput(targetRPM.output);
         controller.initialize(0.0, 1.0);
 
-        SmartDashboard.putNumber("Shooter target", 0.0);
         updateDashboard();
     }
 
     public void run(Action action) {
-        if(this.action != Action.SHOOT && action == Action.SHOOT) {
+        if(!this.action.closedLoop && action.closedLoop) {
             controller.initialize(shooterRPM, 1.0);
         }
 
@@ -120,10 +130,10 @@ public class Shooter implements ISubsystem {
     public void updateOutputs() {
         double output = 0.0;
 
-        if(action == Action.SHOOT) {
+        if(action.closedLoop) {
             output = controller.calculateOutput(shooterRPM, targetRPM);
-        } else if(action == Action.CLEAR) {
-            output = -0.10;
+        } else {
+            output = action.voltage;
         }
 
         shooterVoltage = output * 100.0;
