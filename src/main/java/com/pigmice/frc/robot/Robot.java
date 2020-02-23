@@ -114,7 +114,7 @@ public class Robot extends TimedRobot {
         subsystems.forEach((ISubsystem subsystem) -> subsystem.updateDashboard());
     }
 
-    public void displayDeployTimestamp() {
+    private void displayDeployTimestamp() {
         FileInputStream file;
         Properties properties = new Properties();
 
@@ -130,7 +130,7 @@ public class Robot extends TimedRobot {
         SmartDashboard.putString("Deploy Timestamp", properties.getProperty("DEPLOY_TIMESTAMP"));
     }
 
-    public Drivetrain setupDrivetrain() {
+    private Drivetrain setupDrivetrain() {
         CANSparkMax frontRight = new CANSparkMax(1, MotorType.kBrushless);
         CANSparkMax backRight = new CANSparkMax(2, MotorType.kBrushless);
         CANSparkMax frontLeft = new CANSparkMax(3, MotorType.kBrushless);
@@ -153,7 +153,7 @@ public class Robot extends TimedRobot {
 
         follower.follow(motor, true);
 
-        return new Shooter(motor, new DoubleSolenoid(0, 1));
+        return new Shooter(motor, new DoubleSolenoid(3, 2));
     }
 
     private Intake setupIntake() {
@@ -161,7 +161,7 @@ public class Robot extends TimedRobot {
 
         motor.setInverted(true);
 
-        return new Intake(motor, new DoubleSolenoid(2, 3));
+        return new Intake(motor, new DoubleSolenoid(1, 0));
     }
 
     private Feeder setupFeeder() {
