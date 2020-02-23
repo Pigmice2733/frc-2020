@@ -40,6 +40,12 @@ public class Shooter implements ISubsystem {
         }
     }
 
+    public enum Action {
+        SHOOT,
+        CLEAR,
+        HOLD
+    }
+
     private final CANSparkMax motor;
     private final CANEncoder encoder;
     private DoubleSolenoid hoodSolenoid;
@@ -52,9 +58,9 @@ public class Shooter implements ISubsystem {
     private Value previousHoodState = Value.kOff;
 
     //private ShooterSetpoint targetRPM = new ShooterSetpoint(4000, 0.5);
-    private ShooterSetpoint targetRPM = new ShooterSetpoint(6200, 0.85);
+    private ShooterSetpoint targetRPM = new ShooterSetpoint(5200, 0.5);
 
-    private boolean runWheels = false;
+    private Action action = Action.HOLD;
 
     private final TakeBackHalf controller = new TakeBackHalf(0.5e-5, 0.8);
 
@@ -73,6 +79,8 @@ public class Shooter implements ISubsystem {
         hoodState = hoodSolenoid.get();
         previousHoodState = hoodState;
 
+        action = Action.HOLD;
+
         controller.updateTargetOutput(targetRPM.output);
         controller.initialize(0.0, 1.0);
 
@@ -80,12 +88,12 @@ public class Shooter implements ISubsystem {
         updateDashboard();
     }
 
-    public void run(boolean run) {
-        if(run && !runWheels) {
+    public void run(Action action) {
+        if(this.action != Action.SHOOT && action == Action.SHOOT) {
             controller.initialize(shooterRPM, 1.0);
         }
 
-        runWheels = run;
+        this.action = action;
     }
 
     public void setHood(boolean extend) {
@@ -110,7 +118,13 @@ public class Shooter implements ISubsystem {
 
     @Override
     public void updateOutputs() {
-        double output = runWheels ? controller.calculateOutput(shooterRPM, targetRPM) : 0.0;
+        double output = 0.0;
+
+        if(action == Action.SHOOT) {
+            output = controller.calculateOutput(shooterRPM, targetRPM);
+        } else if(action == Action.CLEAR) {
+            output = -0.10;
+        }
 
         shooterVoltage = output * 100.0;
         motor.set(output);

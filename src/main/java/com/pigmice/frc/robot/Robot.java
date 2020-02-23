@@ -16,6 +16,7 @@ import com.pigmice.frc.robot.subsystems.Feeder.LiftAction;
 import com.pigmice.frc.robot.subsystems.ISubsystem;
 import com.pigmice.frc.robot.subsystems.Intake;
 import com.pigmice.frc.robot.subsystems.Shooter;
+import com.pigmice.frc.robot.subsystems.Shooter.Action;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
@@ -92,7 +93,7 @@ public class Robot extends TimedRobot {
         intake.run(controls.intake());
         intake.setPosition(controls.intake() ? Intake.Position.DOWN : Intake.Position.UP);
 
-        shooter.run(controls.shoot());
+        shooter.run(controls.shoot() ? Action.SHOOT : Action.HOLD);
         shooter.setHood(controls.extendHood());
 
         subsystems.forEach((ISubsystem subsystem) -> subsystem.updateOutputs());

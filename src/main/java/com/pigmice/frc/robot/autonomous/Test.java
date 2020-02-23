@@ -18,70 +18,77 @@ import com.pigmice.frc.robot.subsystems.Shooter;
 
 public class Test extends Autonomous {
     public Test(Drivetrain drivetrain, Shooter shooter, Feeder feeder, Intake intake) {
-        PathFollower acquisition = constructAcquisition(drivetrain, intake);
-        PathFollower returnAndSpinUp = constructReturnPath(drivetrain, shooter);
+        PathFollower acquisition = constructAcquisition(drivetrain, intake, feeder);
+        PathFollower returnAndSpinUp = constructReturnPath(drivetrain, shooter, intake, feeder);
 
-        this.subroutines = Arrays.asList(
-            new Shoot(shooter, feeder),
-            acquisition,
-            returnAndSpinUp,
-            new Shoot(shooter, feeder)
-        );
+        this.subroutines = Arrays.asList(new Shoot(shooter, feeder), acquisition, returnAndSpinUp,
+                new Shoot(shooter, feeder));
     }
 
     public void initialize() {
         super.initialize();
     }
 
-    public static PathFollower constructAcquisition(Drivetrain drivetrain, Intake intake) {
+    public static PathFollower constructAcquisition(Drivetrain drivetrain, Intake intake, Feeder feeder) {
         List<Point> positions = new ArrayList<>();
         positions.add(new Point(0.0, 0.0));
-        positions.add(new Point(0.4, -0.5));
-        positions.add(new Point(1.2, -0.75));
-        positions.add(new Point(1.5, -1.25));
-        positions.add(new Point(1.5, -2.0));
-        positions.add(new Point(1.5, -3.0));
-        positions.add(new Point(1.5, -3.25));
+        positions.add(new Point(0.4, -0.7));
+        positions.add(new Point(1.2, -0.9));
+        positions.add(new Point(1.3, -1.2));
+        positions.add(new Point(1.4, -1.5));
+        positions.add(new Point(1.4, -2.0));
+        positions.add(new Point(1.4, -5.0));
+        positions.add(new Point(1.4, -5.6));
 
         List<Double> velocities = new ArrayList<>();
-        velocities.add(1.0);
-        velocities.add(1.0);
-        velocities.add(1.0);
-        velocities.add(1.0);
-        velocities.add(1.0);
-        velocities.add(1.0);
-        velocities.add(0.15);
+        velocities.add(3.0);
+        velocities.add(3.0);
+        velocities.add(3.0);
+        velocities.add(2.5);
+        velocities.add(1.25);
+        velocities.add(1.65);
+        velocities.add(1.65);
+        velocities.add(1.25);
 
         Path path = new Path(positions, velocities);
 
-        IAction powerCellAcquisition = new Acquire(intake);
+        IAction powerCellAcquisition = new Acquire(intake, feeder);
 
-        PathFollower follower = new PathFollower(drivetrain, path, true);
-        follower.addAction(4, 6, powerCellAcquisition);
+        PathFollower follower = new PathFollower(drivetrain, path, true, 1.5);
+        follower.addAction(0, 6, powerCellAcquisition);
         return follower;
     }
 
-    public static PathFollower constructReturnPath(Drivetrain drivetrain, Shooter shooter) {
+    public static PathFollower constructReturnPath(Drivetrain drivetrain, Shooter shooter, Intake intake,
+            Feeder feeder) {
         List<Point> positions = new ArrayList<>();
-        positions.add(new Point(1.5, -3.25));
-        positions.add(new Point(0.9, -2.5));
+        positions.add(new Point(1.4, -5.75));
+        positions.add(new Point(0.9, -5.0));
+        positions.add(new Point(0.9, -4.5));
+        positions.add(new Point(0.9, -3.5));
         positions.add(new Point(0.3, -1.75));
         positions.add(new Point(0.0, -1));
+        positions.add(new Point(0.0, -0.5));
         positions.add(new Point(0.0, 0.0));
 
         List<Double> velocities = new ArrayList<>();
-        velocities.add(1.0);
-        velocities.add(1.0);
-        velocities.add(1.0);
-        velocities.add(1.0);
-        velocities.add(0.15);
+        velocities.add(0.5);
+        velocities.add(1.5);
+        velocities.add(2.5);
+        velocities.add(3.0);
+        velocities.add(3.0);
+        velocities.add(3.0);
+        velocities.add(2.0);
+        velocities.add(0.75);
 
         Path path = new Path(positions, velocities);
 
-        IAction spinUp = new SpinUp(shooter);
+        IAction spinUp = new SpinUp(shooter, feeder);
+        IAction powerCellAcquisition = new Acquire(intake, feeder);
 
-        PathFollower follower = new PathFollower(drivetrain, path, false);
-        follower.addAction(2, 3, spinUp);
+        PathFollower follower = new PathFollower(drivetrain, path, false, 1.0);
+        follower.addAction(1, 3, spinUp);
+        follower.addAction(0, 1, powerCellAcquisition);
         return follower;
     }
 }
