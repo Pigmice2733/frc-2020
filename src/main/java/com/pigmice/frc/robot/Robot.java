@@ -10,6 +10,7 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.kauailabs.navx.frc.AHRS;
 import com.pigmice.frc.robot.autonomous.Autonomous;
 import com.pigmice.frc.robot.autonomous.Test;
+import com.pigmice.frc.robot.subsystems.Climber;
 import com.pigmice.frc.robot.subsystems.Drivetrain;
 import com.pigmice.frc.robot.subsystems.Feeder;
 import com.pigmice.frc.robot.subsystems.Feeder.LiftAction;
@@ -30,6 +31,7 @@ public class Robot extends TimedRobot {
     private Shooter shooter;
     private Intake intake;
     private Feeder feeder;
+    private Climber climber;
 
     private final List<ISubsystem> subsystems = new ArrayList<>();
 
@@ -45,11 +47,13 @@ public class Robot extends TimedRobot {
         shooter = setupShooter();
         feeder = setupFeeder();
         intake = setupIntake();
+        climber = setupClimber();
 
         subsystems.add(drivetrain);
         subsystems.add(shooter);
         subsystems.add(feeder);
         subsystems.add(intake);
+        subsystems.add(climber);
 
         subsystems.forEach((ISubsystem subsystem) -> subsystem.initialize());
 
@@ -94,6 +98,14 @@ public class Robot extends TimedRobot {
 
         shooter.run(controls.shoot());
         shooter.setHood(controls.extendHood());
+
+        if(controls.climbUp()) {
+            climber.driveUp();
+        } else if(controls.climbDown()) {
+            climber.driveDown();
+        } else {
+            climber.stop();
+        }
 
         subsystems.forEach((ISubsystem subsystem) -> subsystem.updateOutputs());
         subsystems.forEach((ISubsystem subsystem) -> subsystem.updateDashboard());
@@ -176,5 +188,15 @@ public class Robot extends TimedRobot {
         hopperFollower.setInverted(true);
 
         return new Feeder(hopperLeader, liftLeader);
+    }
+
+    private Climber setupClimber() {
+        TalonSRX climberLeader = new TalonSRX(1);
+        TalonSRX climberFollower = new TalonSRX(4);
+
+        climberFollower.follow(climberLeader);
+        climberFollower.setInverted(true);
+
+        return new Climber(climberLeader);
     }
 }
