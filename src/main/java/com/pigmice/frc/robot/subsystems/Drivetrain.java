@@ -4,8 +4,10 @@ import com.kauailabs.navx.frc.AHRS;
 import com.pigmice.frc.lib.utils.Odometry;
 import com.pigmice.frc.lib.utils.Odometry.Pose;
 import com.pigmice.frc.lib.utils.Utils;
+import com.pigmice.frc.robot.subsystems.System.DrivetrainConfiguration;
 import com.revrobotics.CANEncoder;
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -20,19 +22,33 @@ public class Drivetrain implements ISubsystem {
 
     private AHRS navx;
 
-    private static final double wheelBase = 0.603;
-    private static final double drivetrainDistanceConversion = 16.13;
+    private static Drivetrain instance = null;
 
-    public Drivetrain(CANSparkMax leftDrive, CANSparkMax rightDrive, AHRS navx) {
-        this.leftDrive = leftDrive;
-        this.rightDrive = rightDrive;
-        this.navx = navx;
+    public static Drivetrain getInstance() {
+        if (instance == null) {
+            instance = new Drivetrain();
+        }
+
+        return instance;
+    }
+
+    private Drivetrain() {
+        rightDrive = new CANSparkMax(DrivetrainConfiguration.frontRightMotorPort, MotorType.kBrushless);
+        CANSparkMax rightFollower = new CANSparkMax(DrivetrainConfiguration.backRightMotorPort, MotorType.kBrushless);
+        leftDrive = new CANSparkMax(DrivetrainConfiguration.frontLeftMotorPort, MotorType.kBrushless);
+        CANSparkMax leftFollower = new CANSparkMax(DrivetrainConfiguration.backRightMotorPort, MotorType.kBrushless);
+
+        rightDrive.setInverted(true);
+        leftFollower.follow(leftDrive);
+        rightFollower.follow(rightDrive);
+
+        navx = new AHRS(DrivetrainConfiguration.navxPort);
 
         leftEncoder = leftDrive.getEncoder();
         rightEncoder = rightDrive.getEncoder();
 
-        leftEncoder.setPositionConversionFactor(1.0 / drivetrainDistanceConversion);
-        rightEncoder.setPositionConversionFactor(1.0 / drivetrainDistanceConversion);
+        leftEncoder.setPositionConversionFactor(1.0 / DrivetrainConfiguration.rotationToDistanceConversion);
+        rightEncoder.setPositionConversionFactor(1.0 / DrivetrainConfiguration.rotationToDistanceConversion);
 
         odometry = new Odometry(new Pose(0.0, 0.0, 0.0));
     }
@@ -93,13 +109,13 @@ public class Drivetrain implements ISubsystem {
         double leftSpeed = forwardSpeed;
         double rightSpeed = forwardSpeed;
 
-        if(!Utils.almostEquals(forwardSpeed, 0.0)) {
-            leftSpeed = forwardSpeed * (1 + (curvature * 0.5 * wheelBase));
-            rightSpeed = forwardSpeed * (1 - (curvature * 0.5 * wheelBase));
+        if (!Utils.almostEquals(forwardSpeed, 0.0)) {
+            leftSpeed = forwardSpeed * (1 + (curvature * 0.5 * DrivetrainConfiguration.wheelBase));
+            rightSpeed = forwardSpeed * (1 - (curvature * 0.5 * DrivetrainConfiguration.wheelBase));
         }
 
         leftDemand = leftSpeed;
-        rightDemand =  rightSpeed;
+        rightDemand = rightSpeed;
     }
 
     public void stop() {

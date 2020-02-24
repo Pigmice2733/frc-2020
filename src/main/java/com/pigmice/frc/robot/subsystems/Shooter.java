@@ -2,8 +2,10 @@ package com.pigmice.frc.robot.subsystems;
 
 import com.pigmice.frc.lib.controllers.TakeBackHalf;
 import com.pigmice.frc.lib.motion.setpoint.ISetpoint;
+import com.pigmice.frc.robot.subsystems.System.ShooterConfiguration;
 import com.revrobotics.CANEncoder;
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
@@ -62,8 +64,6 @@ public class Shooter implements ISubsystem {
     private final CANEncoder encoder;
     private DoubleSolenoid hoodSolenoid;
 
-    private final double reduction = 1.0/1.5;
-
     private double shooterRPM = 0.0;
     private double shooterVoltage = 0.0;
     private Value hoodState = Value.kOff;
@@ -75,12 +75,26 @@ public class Shooter implements ISubsystem {
 
     private final TakeBackHalf controller = new TakeBackHalf(0.5e-5, 0.8);
 
-    public Shooter(CANSparkMax motor, DoubleSolenoid hoodSolenoid) {
-        this.motor = motor;
-        this.hoodSolenoid = hoodSolenoid;
+    private static Shooter instance = null;
+
+    public static Shooter getInstance() {
+        if(instance == null) {
+            instance = new Shooter();
+        }
+
+        return instance;
+    }
+
+    public Shooter() {
+        motor = new CANSparkMax(ShooterConfiguration.leaderMotorPort, MotorType.kBrushless);
+        CANSparkMax follower = new CANSparkMax(ShooterConfiguration.followerMotorPort, MotorType.kBrushless);
+        follower.follow(motor, true);
+
         encoder = motor.getEncoder();
 
-        encoder.setVelocityConversionFactor(1.0/reduction);
+        hoodSolenoid = new DoubleSolenoid(ShooterConfiguration.forwardSolenoidPort, ShooterConfiguration.reverseSolenoidPort);
+
+        encoder.setVelocityConversionFactor(1.0 / ShooterConfiguration.reduction);
     }
 
     @Override

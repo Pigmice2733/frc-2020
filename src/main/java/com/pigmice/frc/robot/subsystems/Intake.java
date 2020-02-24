@@ -2,6 +2,7 @@ package com.pigmice.frc.robot.subsystems;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.pigmice.frc.robot.subsystems.System.IntakeConfiguration;
 
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
@@ -21,9 +22,21 @@ public class Intake implements ISubsystem {
     private Value targetPistonState = Value.kOff;
     private Value previousPistonState = Value.kOff;
 
-    public Intake(TalonSRX motor, DoubleSolenoid solenoid) {
-        this.motor = motor;
-        this.solenoid = solenoid;
+    private static Intake instance = null;
+
+    public static Intake getInstance() {
+        if(instance == null) {
+            instance = new Intake();
+        }
+
+        return instance;
+    }
+
+    public Intake() {
+        motor = new TalonSRX(IntakeConfiguration.motorPort);
+        motor.setInverted(true);
+
+        solenoid = new DoubleSolenoid(IntakeConfiguration.forwardSolenoidPort, IntakeConfiguration.reverseSolenoidPort);
     }
 
     @Override
@@ -38,7 +51,7 @@ public class Intake implements ISubsystem {
     }
 
     public void setPosition(Position position) {
-        targetPistonState = (position == Position.DOWN) ? Value.kReverse : Value.kForward;
+        targetPistonState = (position == Position.DOWN) ? Value.kForward : Value.kReverse;
     }
 
     @Override

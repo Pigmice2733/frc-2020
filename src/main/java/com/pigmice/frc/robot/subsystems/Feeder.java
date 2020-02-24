@@ -2,6 +2,7 @@ package com.pigmice.frc.robot.subsystems;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.pigmice.frc.robot.subsystems.System.FeederConfiguration;
 
 public class Feeder implements ISubsystem {
     public enum LiftAction {
@@ -25,9 +26,26 @@ public class Feeder implements ISubsystem {
     private LiftAction liftAction = LiftAction.HOLD;
     private boolean runHopper = false;
 
-    public Feeder(TalonSRX hopperMotor, TalonSRX liftMotor) {
-        this.hopperMotor = hopperMotor;
-        this.liftMotor = liftMotor;
+    private static Feeder instance = null;
+
+    public static Feeder getInstance() {
+        if(instance == null) {
+            instance = new Feeder();
+        }
+
+        return instance;
+    }
+
+    public Feeder() {
+        liftMotor = new TalonSRX(FeederConfiguration.liftLeaderMotorPort);
+        TalonSRX liftFollower = new TalonSRX(FeederConfiguration.liftFollowerMotorPort);
+        liftFollower.follow(liftMotor);
+        liftFollower.setInverted(true);
+
+        hopperMotor = new TalonSRX(FeederConfiguration.hopperLeaderMotorPort);
+        TalonSRX hopperFollower = new TalonSRX(FeederConfiguration.hopperLeaderMotorPort);
+        hopperFollower.follow(hopperMotor);
+        hopperFollower.setInverted(true);
     }
 
     @Override
