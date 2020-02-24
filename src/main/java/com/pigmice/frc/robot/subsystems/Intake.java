@@ -15,7 +15,7 @@ public class Intake implements ISubsystem {
     private final TalonSRX motor;
     private final DoubleSolenoid solenoid;
 
-    private static final double wheelSpeed = 0.4;
+    private static final double wheelSpeed = 0.6;
 
     private double speed = 0.0;
     private Value targetPistonState = Value.kOff;

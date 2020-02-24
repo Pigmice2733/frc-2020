@@ -40,6 +40,24 @@ public class Shooter implements ISubsystem {
         }
     }
 
+    public enum Action {
+        LONG_SHOT(7000, 0.87, true),
+        MEDIUM_SHOT(5200, 0.65, true),
+        SHORT_SHOT(4000, 0.5, true),
+        CLEAR(-100, -0.1, false),
+        HOLD(0, 0, false);
+
+        private final double rpm;
+        private final double voltage;
+        private final boolean closedLoop;
+
+        private Action(double rpm, double voltage, boolean closedLoop) {
+            this.rpm = rpm;
+            this.voltage = voltage;
+            this.closedLoop = closedLoop;
+        }
+    }
+
     private final CANSparkMax motor;
     private final CANEncoder encoder;
     private DoubleSolenoid hoodSolenoid;
@@ -51,10 +69,9 @@ public class Shooter implements ISubsystem {
     private Value hoodState = Value.kOff;
     private Value previousHoodState = Value.kOff;
 
-    //private ShooterSetpoint targetRPM = new ShooterSetpoint(4000, 0.5);
-    private ShooterSetpoint targetRPM = new ShooterSetpoint(6200, 0.85);
+    private ShooterSetpoint targetRPM = new ShooterSetpoint(5200, 0.5);
 
-    private boolean runWheels = false;
+    private Action action = Action.HOLD;
 
     private final TakeBackHalf controller = new TakeBackHalf(0.5e-5, 0.8);
 
@@ -73,19 +90,20 @@ public class Shooter implements ISubsystem {
         hoodState = hoodSolenoid.get();
         previousHoodState = hoodState;
 
+        action = Action.HOLD;
+
         controller.updateTargetOutput(targetRPM.output);
         controller.initialize(0.0, 1.0);
 
-        SmartDashboard.putNumber("Shooter target", 0.0);
         updateDashboard();
     }
 
-    public void run(boolean run) {
-        if(run && !runWheels) {
+    public void run(Action action) {
+        if(!this.action.closedLoop && action.closedLoop) {
             controller.initialize(shooterRPM, 1.0);
         }
 
-        runWheels = run;
+        this.action = action;
     }
 
     public void setHood(boolean extend) {
@@ -110,7 +128,13 @@ public class Shooter implements ISubsystem {
 
     @Override
     public void updateOutputs() {
-        double output = runWheels ? controller.calculateOutput(shooterRPM, targetRPM) : 0.0;
+        double output = 0.0;
+
+        if(action.closedLoop) {
+            output = controller.calculateOutput(shooterRPM, targetRPM);
+        } else {
+            output = action.voltage;
+        }
 
         shooterVoltage = output * 100.0;
         motor.set(output);
