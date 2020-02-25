@@ -38,14 +38,18 @@ public class Feeder implements ISubsystem {
 
     public Feeder() {
         liftMotor = new TalonSRX(FeederConfiguration.liftLeaderMotorPort);
+        liftMotor.setInverted(FeederConfiguration.liftInverted);
+
         TalonSRX liftFollower = new TalonSRX(FeederConfiguration.liftFollowerMotorPort);
         liftFollower.follow(liftMotor);
-        liftFollower.setInverted(true);
+        liftFollower.setInverted(!FeederConfiguration.liftInverted);
 
         hopperMotor = new TalonSRX(FeederConfiguration.hopperLeaderMotorPort);
+        hopperMotor.setInverted(FeederConfiguration.hopperInverted);
+
         TalonSRX hopperFollower = new TalonSRX(FeederConfiguration.hopperLeaderMotorPort);
         hopperFollower.follow(hopperMotor);
-        hopperFollower.setInverted(true);
+        hopperFollower.setInverted(!FeederConfiguration.hopperInverted);
     }
 
     @Override

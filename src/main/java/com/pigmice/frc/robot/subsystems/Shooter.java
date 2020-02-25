@@ -87,6 +87,8 @@ public class Shooter implements ISubsystem {
 
     public Shooter() {
         motor = new CANSparkMax(ShooterConfiguration.leaderMotorPort, MotorType.kBrushless);
+        motor.setInverted(ShooterConfiguration.inverted);
+
         CANSparkMax follower = new CANSparkMax(ShooterConfiguration.followerMotorPort, MotorType.kBrushless);
         follower.follow(motor, true);
 

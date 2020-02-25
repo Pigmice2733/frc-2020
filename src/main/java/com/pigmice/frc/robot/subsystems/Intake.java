@@ -34,7 +34,7 @@ public class Intake implements ISubsystem {
 
     public Intake() {
         motor = new TalonSRX(IntakeConfiguration.motorPort);
-        motor.setInverted(true);
+        motor.setInverted(IntakeConfiguration.motorInverted);
 
         solenoid = new DoubleSolenoid(IntakeConfiguration.forwardSolenoidPort, IntakeConfiguration.reverseSolenoidPort);
     }

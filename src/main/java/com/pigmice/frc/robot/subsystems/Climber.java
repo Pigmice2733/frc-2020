@@ -26,10 +26,11 @@ public class Climber implements ISubsystem {
 
     public Climber() {
         motor = new TalonSRX(ClimberConfiguration.leaderMotorPort);
-        TalonSRX follower = new TalonSRX(ClimberConfiguration.followerMotorPort);
+        motor.setInverted(ClimberConfiguration.leaderInverted);
 
+        TalonSRX follower = new TalonSRX(ClimberConfiguration.followerMotorPort);
         follower.follow(motor);
-        follower.setInverted(true);
+        follower.setInverted(ClimberConfiguration.followerInverted);
 
         SmartDashboard.putNumber("Climber power", 0.0);
     }
