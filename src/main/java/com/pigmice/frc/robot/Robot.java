@@ -206,6 +206,6 @@ public class Robot extends TimedRobot {
         climberFollower.follow(climberLeader);
         climberFollower.setInverted(true);
 
-        return new Climber(climberLeader);
+        return new Climber(climberLeader, new DoubleSolenoid(5, 4));
     }
 }
