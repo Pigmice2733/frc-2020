@@ -4,11 +4,16 @@ import com.kauailabs.navx.frc.AHRS;
 import com.pigmice.frc.lib.utils.Odometry;
 import com.pigmice.frc.lib.utils.Odometry.Pose;
 import com.pigmice.frc.lib.utils.Utils;
-import com.pigmice.frc.robot.subsystems.System.DrivetrainConfiguration;
+import com.pigmice.frc.robot.Dashboard;
+import com.pigmice.frc.robot.subsystems.SystemConfig.DrivetrainConfiguration;
 import com.revrobotics.CANEncoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Drivetrain implements ISubsystem {
@@ -21,6 +26,7 @@ public class Drivetrain implements ISubsystem {
     private Odometry odometry;
 
     private AHRS navx;
+    private final NetworkTableEntry navxReport;
 
     private static Drivetrain instance = null;
 
@@ -44,6 +50,10 @@ public class Drivetrain implements ISubsystem {
 
         navx = new AHRS(DrivetrainConfiguration.navxPort);
 
+        ShuffleboardLayout testReportLayout = Shuffleboard.getTab(Dashboard.systemsTestTabName)
+                .getLayout("Drivetrain", BuiltInLayouts.kList).withSize(2, 1).withPosition(6, 0);
+        navxReport = testReportLayout.add("NavX", false).getEntry();
+
         leftEncoder = leftDrive.getEncoder();
         rightEncoder = rightDrive.getEncoder();
 
@@ -53,6 +63,7 @@ public class Drivetrain implements ISubsystem {
         odometry = new Odometry(new Pose(0.0, 0.0, 0.0));
     }
 
+    @Override
     public void initialize() {
         leftPosition = 0.0;
         rightPosition = 0.0;
@@ -69,6 +80,7 @@ public class Drivetrain implements ISubsystem {
         navx.setAngleAdjustment(navx.getAngleAdjustment() - navx.getAngle() - 90.0);
     }
 
+    @Override
     public void updateDashboard() {
         Pose currentPose = odometry.getPose();
 
@@ -79,6 +91,7 @@ public class Drivetrain implements ISubsystem {
         SmartDashboard.putNumber("Right", rightPosition);
     }
 
+    @Override
     public void updateInputs() {
         leftPosition = leftEncoder.getPosition();
         rightPosition = rightEncoder.getPosition();
@@ -123,6 +136,7 @@ public class Drivetrain implements ISubsystem {
         rightDemand = 0.0;
     }
 
+    @Override
     public void updateOutputs() {
         leftDrive.set(leftDemand);
         rightDrive.set(rightDemand);
@@ -131,6 +145,8 @@ public class Drivetrain implements ISubsystem {
         rightDemand = 0.0;
     }
 
-    public void test() {
+    @Override
+    public void test(double time) {
+        navxReport.setBoolean(navx.getAngle() != 0.0);
     }
 }

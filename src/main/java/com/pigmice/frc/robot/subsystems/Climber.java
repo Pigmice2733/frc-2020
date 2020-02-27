@@ -2,12 +2,13 @@ package com.pigmice.frc.robot.subsystems;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-import com.pigmice.frc.robot.subsystems.System.ClimberConfiguration;
+import com.pigmice.frc.robot.subsystems.SystemConfig.ClimberConfiguration;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Climber implements ISubsystem {
     private final TalonSRX motor;
+    private final TalonSRX follower;
 
     private final double upSpeed = 0.5;
     private double downSpeed = -0.4;
@@ -28,7 +29,7 @@ public class Climber implements ISubsystem {
         motor = new TalonSRX(ClimberConfiguration.leaderMotorPort);
         motor.setInverted(ClimberConfiguration.leaderInverted);
 
-        TalonSRX follower = new TalonSRX(ClimberConfiguration.followerMotorPort);
+        follower = new TalonSRX(ClimberConfiguration.followerMotorPort);
         follower.follow(motor);
         follower.setInverted(ClimberConfiguration.followerInverted);
 
@@ -67,6 +68,6 @@ public class Climber implements ISubsystem {
     }
 
     @Override
-    public void test() {
+    public void test(double currentTestTime) {
     }
 }

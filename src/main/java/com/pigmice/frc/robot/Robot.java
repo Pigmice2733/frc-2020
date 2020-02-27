@@ -21,6 +21,7 @@ import com.pigmice.frc.robot.subsystems.Shooter.Action;
 
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Robot extends TimedRobot {
@@ -36,6 +37,8 @@ public class Robot extends TimedRobot {
 
     private List<Autonomous> autoRoutines = new ArrayList<>();
     private Autonomous autonomous;
+
+    private double testStartTime;
 
     @Override
     public void robotInit() {
@@ -116,11 +119,12 @@ public class Robot extends TimedRobot {
 
     @Override
     public void testInit() {
-        subsystems.forEach((ISubsystem subsystem) -> subsystem.test());
+        testStartTime = Timer.getFPGATimestamp();
     }
 
     @Override
     public void testPeriodic() {
+        subsystems.forEach((ISubsystem subsystem) -> subsystem.test(Timer.getFPGATimestamp() - testStartTime));
     }
 
     @Override

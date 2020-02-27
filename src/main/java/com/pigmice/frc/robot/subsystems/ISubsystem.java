@@ -9,6 +9,5 @@ public interface ISubsystem {
 
     public void updateOutputs();
 
-    public void test();
-
+    public void test(double currentTestTime);
 }

@@ -2,13 +2,20 @@ package com.pigmice.frc.robot.subsystems;
 
 import com.pigmice.frc.lib.controllers.TakeBackHalf;
 import com.pigmice.frc.lib.motion.setpoint.ISetpoint;
-import com.pigmice.frc.robot.subsystems.System.ShooterConfiguration;
+import com.pigmice.frc.robot.Dashboard;
+import com.pigmice.frc.robot.MotorTester;
+import com.pigmice.frc.robot.MotorTester.TestStatus;
+import com.pigmice.frc.robot.subsystems.SystemConfig.ShooterConfiguration;
 import com.revrobotics.CANEncoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
+import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Shooter implements ISubsystem {
@@ -60,9 +67,11 @@ public class Shooter implements ISubsystem {
         }
     }
 
-    private final CANSparkMax motor;
+    private final CANSparkMax motor, follower;
     private final CANEncoder encoder;
     private DoubleSolenoid hoodSolenoid;
+
+    private final MotorTester.Config motorTest = new MotorTester.Config(0.25, 0.1, 1.0);
 
     private double shooterRPM = 0.0;
     private double shooterVoltage = 0.0;
@@ -77,6 +86,9 @@ public class Shooter implements ISubsystem {
 
     private static Shooter instance = null;
 
+    private final NetworkTableEntry shooterLeaderReport;
+    private final NetworkTableEntry shooterFollowerReport;
+
     public static Shooter getInstance() {
         if(instance == null) {
             instance = new Shooter();
@@ -89,7 +101,7 @@ public class Shooter implements ISubsystem {
         motor = new CANSparkMax(ShooterConfiguration.leaderMotorPort, MotorType.kBrushless);
         motor.setInverted(ShooterConfiguration.inverted);
 
-        CANSparkMax follower = new CANSparkMax(ShooterConfiguration.followerMotorPort, MotorType.kBrushless);
+        follower = new CANSparkMax(ShooterConfiguration.followerMotorPort, MotorType.kBrushless);
         follower.follow(motor, true);
 
         encoder = motor.getEncoder();
@@ -97,6 +109,14 @@ public class Shooter implements ISubsystem {
         hoodSolenoid = new DoubleSolenoid(ShooterConfiguration.forwardSolenoidPort, ShooterConfiguration.reverseSolenoidPort);
 
         encoder.setVelocityConversionFactor(1.0 / ShooterConfiguration.reduction);
+
+        ShuffleboardLayout testReportLayout = Shuffleboard.getTab(Dashboard.systemsTestTabName)
+                .getLayout("Shooter", BuiltInLayouts.kList).withSize(2, 2).withPosition(4, 0);
+
+        shooterLeaderReport = testReportLayout
+                .add("Shooter Leader (" + ShooterConfiguration.leaderMotorPort + ")", false).getEntry();
+        shooterFollowerReport = testReportLayout
+                .add("Shooter Follower (" + ShooterConfiguration.followerMotorPort + ")", false).getEntry();
     }
 
     @Override
@@ -162,6 +182,11 @@ public class Shooter implements ISubsystem {
     }
 
     @Override
-    public void test() {
+    public void test(double currentTestTime) {
+        TestStatus status = MotorTester.Test(motor, motorTest, currentTestTime);
+        shooterLeaderReport.setBoolean(status == TestStatus.PASS);
+
+        status = MotorTester.Test(follower, motorTest, currentTestTime);
+        shooterFollowerReport.setBoolean(status == TestStatus.PASS);
     }
 }

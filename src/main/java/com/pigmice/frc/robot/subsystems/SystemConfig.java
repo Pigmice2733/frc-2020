@@ -2,7 +2,7 @@ package com.pigmice.frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj.SPI;
 
-public class System {
+public class SystemConfig {
     public static class DrivetrainConfiguration {
         public static final int frontRightMotorPort = 1;
         public static final int backRightMotorPort = 2;
