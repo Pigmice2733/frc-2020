@@ -16,6 +16,7 @@ import com.pigmice.frc.robot.subsystems.Feeder;
 import com.pigmice.frc.robot.subsystems.Feeder.LiftAction;
 import com.pigmice.frc.robot.subsystems.ISubsystem;
 import com.pigmice.frc.robot.subsystems.Intake;
+import com.pigmice.frc.robot.subsystems.LEDs;
 import com.pigmice.frc.robot.subsystems.Shooter;
 import com.pigmice.frc.robot.subsystems.Shooter.Action;
 
@@ -30,6 +31,7 @@ public class Robot extends TimedRobot {
     private Intake intake;
     private Feeder feeder;
     private Climber climber;
+    private LEDs leds;
 
     private final List<ISubsystem> subsystems = new ArrayList<>();
 
@@ -49,6 +51,7 @@ public class Robot extends TimedRobot {
         feeder = Feeder.getInstance();
         intake = Intake.getInstance();
         climber = Climber.getInstance();
+        leds = LEDs.getInstance();
 
         subsystems.add(drivetrain);
         subsystems.add(shooter);
@@ -138,6 +141,11 @@ public class Robot extends TimedRobot {
     public void disabledPeriodic() {
         subsystems.forEach((ISubsystem subsystem) -> subsystem.updateInputs());
         subsystems.forEach((ISubsystem subsystem) -> subsystem.updateDashboard());
+    }
+
+    @Override
+    public void robotPeriodic() {
+        leds.updateOutputs();
     }
 
     private void displayDeployTimestamp() {

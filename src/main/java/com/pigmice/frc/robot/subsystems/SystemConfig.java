@@ -51,4 +51,9 @@ public class SystemConfig {
         public static final boolean leaderInverted = false;
         public static final boolean followerInverted = true;
     }
+
+    public static class LEDConfiguration {
+        public static final int ledPort = 0;
+        public static final int ledCount = 38 + 38 + 11;
+    }
 }
