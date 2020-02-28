@@ -8,6 +8,7 @@ import com.pigmice.frc.robot.Dashboard;
 import com.pigmice.frc.robot.subsystems.SystemConfig.DrivetrainConfiguration;
 import com.revrobotics.CANEncoder;
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.networktables.NetworkTableEntry;
@@ -17,7 +18,7 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Drivetrain implements ISubsystem {
-    private final CANSparkMax leftDrive, rightDrive;
+    private final CANSparkMax leftDrive, rightDrive, rightFollower, leftFollower;
     private final CANEncoder leftEncoder, rightEncoder;
 
     private double leftDemand, rightDemand;
@@ -40,9 +41,9 @@ public class Drivetrain implements ISubsystem {
 
     private Drivetrain() {
         rightDrive = new CANSparkMax(DrivetrainConfiguration.frontRightMotorPort, MotorType.kBrushless);
-        CANSparkMax rightFollower = new CANSparkMax(DrivetrainConfiguration.backRightMotorPort, MotorType.kBrushless);
+        rightFollower = new CANSparkMax(DrivetrainConfiguration.backRightMotorPort, MotorType.kBrushless);
         leftDrive = new CANSparkMax(DrivetrainConfiguration.frontLeftMotorPort, MotorType.kBrushless);
-        CANSparkMax leftFollower = new CANSparkMax(DrivetrainConfiguration.backRightMotorPort, MotorType.kBrushless);
+        leftFollower = new CANSparkMax(DrivetrainConfiguration.backRightMotorPort, MotorType.kBrushless);
 
         rightDrive.setInverted(true);
         leftFollower.follow(leftDrive);
@@ -148,5 +149,13 @@ public class Drivetrain implements ISubsystem {
     @Override
     public void test(double time) {
         navxReport.setBoolean(navx.getAngle() != 0.0);
+    }
+
+    public void setCoastMode(boolean coasting) {
+        CANSparkMax.IdleMode newMode = coasting ? IdleMode.kCoast : IdleMode.kBrake;
+        leftDrive.setIdleMode(newMode);
+        rightDrive.setIdleMode(newMode);
+        leftFollower.setIdleMode(newMode);
+        rightFollower.setIdleMode(newMode);
     }
 }

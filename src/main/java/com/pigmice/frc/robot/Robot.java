@@ -66,6 +66,7 @@ public class Robot extends TimedRobot {
 
     @Override
     public void autonomousInit() {
+        drivetrain.setCoastMode(false);
         subsystems.forEach((ISubsystem subsystem) -> subsystem.initialize());
 
         autonomous = Autonomous.getSelected();
@@ -84,6 +85,7 @@ public class Robot extends TimedRobot {
 
     @Override
     public void teleopInit() {
+        drivetrain.setCoastMode(false);
         subsystems.forEach((ISubsystem subsystem) -> subsystem.initialize());
     }
 
@@ -125,6 +127,11 @@ public class Robot extends TimedRobot {
     @Override
     public void testPeriodic() {
         subsystems.forEach((ISubsystem subsystem) -> subsystem.test(Timer.getFPGATimestamp() - testStartTime));
+    }
+
+    @Override
+    public void disabledInit() {
+        drivetrain.setCoastMode(true);
     }
 
     @Override
