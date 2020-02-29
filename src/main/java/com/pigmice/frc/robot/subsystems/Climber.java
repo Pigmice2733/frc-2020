@@ -8,7 +8,6 @@ import com.pigmice.frc.robot.subsystems.SystemConfig.ClimberConfiguration;
 
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Climber implements ISubsystem {
     private final TalonSRX leftWinch, rightWinch;
@@ -79,10 +78,6 @@ public class Climber implements ISubsystem {
     @Override
     public void updateInputs() {
         double position = 0.5 * (leftWinch.getSelectedSensorPosition() + rightWinch.getSelectedSensorPosition());
-
-        SmartDashboard.putNumber("Left Winch", leftWinch.getSelectedSensorPosition());
-        SmartDashboard.putNumber("Right Winch", rightWinch.getSelectedSensorPosition());
-        SmartDashboard.putNumber("Climber target", targetPosition);
 
         if (position < 4096 && targetPosition < 4096) {
             targetPistonState = Value.kReverse;
