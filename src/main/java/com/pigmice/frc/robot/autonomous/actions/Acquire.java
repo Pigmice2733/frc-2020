@@ -8,9 +8,12 @@ public class Acquire implements IAction {
     private final Intake intake;
     private final Feeder feeder;
 
-    public Acquire(Intake intake, Feeder feeder) {
+    private final boolean keepIntakeDown;
+
+    public Acquire(Intake intake, Feeder feeder, boolean keepIntakeDown) {
         this.intake = intake;
         this.feeder = feeder;
+        this.keepIntakeDown = keepIntakeDown;
     }
 
     @Override
@@ -27,9 +30,12 @@ public class Acquire implements IAction {
 
     @Override
     public void end() {
-        intake.setPosition(Intake.Position.UP);
-        intake.run(false);
-        feeder.runHopper(false);
+        if(!keepIntakeDown) {
+            intake.setPosition(Intake.Position.UP);
+            intake.run(false);
+            feeder.runHopper(false);
+        }
+
         feeder.runLift(LiftAction.HOLD);
     }
 }
