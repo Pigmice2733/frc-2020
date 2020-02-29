@@ -16,7 +16,6 @@ import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Shooter implements ISubsystem {
     private static class ShooterSetpoint implements ISetpoint {
@@ -89,6 +88,8 @@ public class Shooter implements ISubsystem {
     private final NetworkTableEntry shooterLeaderReport;
     private final NetworkTableEntry shooterFollowerReport;
 
+    private final NetworkTableEntry shooterRPMDisplay, shooterVoltageDisplay, shooterReadyDisplay;
+
     public static Shooter getInstance() {
         if(instance == null) {
             instance = new Shooter();
@@ -111,13 +112,23 @@ public class Shooter implements ISubsystem {
         encoder.setVelocityConversionFactor(1.0 / ShooterConfiguration.reduction);
 
         ShuffleboardLayout testReportLayout = Shuffleboard.getTab(Dashboard.systemsTestTabName)
-                .getLayout("Shooter", BuiltInLayouts.kList).withSize(2, 2).withPosition(
-                        Dashboard.shooterTestPosition, 0);
+                .getLayout("Shooter", BuiltInLayouts.kList)
+                .withSize(2, 2)
+                .withPosition(Dashboard.shooterTestPosition, 0);
 
         shooterLeaderReport = testReportLayout
                 .add("Shooter Leader (" + ShooterConfiguration.leaderMotorPort + ")", false).getEntry();
         shooterFollowerReport = testReportLayout
                 .add("Shooter Follower (" + ShooterConfiguration.followerMotorPort + ")", false).getEntry();
+
+        ShuffleboardLayout displayLayout = Shuffleboard.getTab(Dashboard.developmentTabName)
+                .getLayout("Shooter", BuiltInLayouts.kList)
+                .withSize(2, 7)
+                .withPosition(Dashboard.shooterDisplayPosition, 0);
+
+        shooterRPMDisplay = displayLayout.add("Shooter RPM", 0.0).getEntry();
+        shooterVoltageDisplay = displayLayout.add("Shooter Voltage", 0.0).getEntry();
+        shooterReadyDisplay = displayLayout.add("Shooter Ready", false).getEntry();
     }
 
     @Override
@@ -153,9 +164,9 @@ public class Shooter implements ISubsystem {
 
     @Override
     public void updateDashboard() {
-        SmartDashboard.putNumber("Shooter RPM", shooterRPM);
-        SmartDashboard.putNumber("Shooter Voltage", shooterVoltage);
-        SmartDashboard.putBoolean("Shooter Ready", isReady());
+        shooterRPMDisplay.setNumber(shooterRPM);
+        shooterVoltageDisplay.setNumber(shooterVoltage);
+        shooterReadyDisplay.setBoolean(isReady());
     }
 
     @Override

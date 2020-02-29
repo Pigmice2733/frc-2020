@@ -20,10 +20,11 @@ import com.pigmice.frc.robot.subsystems.LEDs;
 import com.pigmice.frc.robot.subsystems.Shooter;
 import com.pigmice.frc.robot.subsystems.Shooter.Action;
 
+import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 
 public class Robot extends TimedRobot {
     private Drivetrain drivetrain;
@@ -152,15 +153,20 @@ public class Robot extends TimedRobot {
         FileInputStream file;
         Properties properties = new Properties();
 
+        NetworkTableEntry timestampDisplay = Shuffleboard.getTab(Dashboard.developmentTabName)
+                .add("Deploy Timestamp", "none")
+                .withSize(2, 1)
+                .withPosition(Dashboard.deployTimestampPosition, 0)
+                .getEntry();
+
         try {
             Path filePath = Filesystem.getDeployDirectory().toPath().resolve("deployTimestamp.properties");
             file = new FileInputStream(filePath.toFile());
             properties.load(file);
         } catch (Exception e) {
-            SmartDashboard.putString("Deploy Timestamp", "none");
             return;
         }
 
-        SmartDashboard.putString("Deploy Timestamp", properties.getProperty("DEPLOY_TIMESTAMP"));
+        timestampDisplay.forceSetString(properties.getProperty("DEPLOY_TIMESTAMP"));
     }
 }
