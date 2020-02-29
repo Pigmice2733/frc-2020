@@ -10,6 +10,11 @@ public class LEDs implements ISubsystem {
     private final AddressableLED leds;
     private final AddressableLEDBuffer buffer;
 
+    private final int helixLengths = 38;
+    private final int crossbarLength = 11;
+
+    private final double tickTime = 0.25;
+
     private static LEDs instance = null;
 
     public static LEDs getInstance() {
@@ -22,7 +27,7 @@ public class LEDs implements ISubsystem {
 
     private LEDs() {
         leds = new AddressableLED(LEDConfiguration.ledPort);
-        buffer = new AddressableLEDBuffer(LEDConfiguration.ledCount);
+        buffer = new AddressableLEDBuffer(2*helixLengths + crossbarLength);
 
         leds.setLength(buffer.getLength());
 
@@ -43,14 +48,19 @@ public class LEDs implements ISubsystem {
 
     @Override
     public void updateOutputs() {
-        final int length  = buffer.getLength();
-        final int hue = 150;
-        final double period = 10.0;
+        for (int i = 0; i < helixLengths/2; i++) {
+            int offset = (int)((Timer.getFPGATimestamp() % (tickTime * helixLengths * 0.5))/tickTime);
+            int value = i == offset ? 200 : 0;
+            buffer.setHSV(i, 150, 255, value);
+            buffer.setHSV(helixLengths - i, 150, 255, value);
+            buffer.setHSV(i + helixLengths, 150, 255, value);
+            buffer.setHSV(helixLengths - i + helixLengths, 150, 255, value);
+        }
 
-        int offset = (int)(((Timer.getFPGATimestamp() % period) / period) * length);
-
-        for (int i = 0; i < length; i++) {
-            buffer.setHSV(i, hue, 255, Math.abs(i - offset) < 2 ? 255 : 0);
+        for (int i = 0; i < crossbarLength; i++) {
+            int offset = (int) ((Timer.getFPGATimestamp() % (tickTime * crossbarLength)) / tickTime);
+            int value = i == offset ? 200 : 0;
+            buffer.setHSV(i + 2*helixLengths, 150, 255, value);
         }
 
         leds.setData(buffer);
