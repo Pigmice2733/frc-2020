@@ -54,7 +54,8 @@ public class Drivetrain implements ISubsystem {
         navx = new AHRS(DrivetrainConfiguration.navxPort);
 
         ShuffleboardLayout testReportLayout = Shuffleboard.getTab(Dashboard.systemsTestTabName)
-                .getLayout("Drivetrain", BuiltInLayouts.kList).withSize(2, 1).withPosition(6, 0);
+                .getLayout("Drivetrain", BuiltInLayouts.kList).withSize(2, 1).withPosition(
+                        Dashboard.drivetrainTestPosition, 0);
         navxReport = testReportLayout.add("NavX", false).getEntry();
 
         leftEncoder = leftDrive.getEncoder();

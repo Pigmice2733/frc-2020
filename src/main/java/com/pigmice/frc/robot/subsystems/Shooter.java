@@ -111,7 +111,8 @@ public class Shooter implements ISubsystem {
         encoder.setVelocityConversionFactor(1.0 / ShooterConfiguration.reduction);
 
         ShuffleboardLayout testReportLayout = Shuffleboard.getTab(Dashboard.systemsTestTabName)
-                .getLayout("Shooter", BuiltInLayouts.kList).withSize(2, 2).withPosition(4, 0);
+                .getLayout("Shooter", BuiltInLayouts.kList).withSize(2, 2).withPosition(
+                        Dashboard.shooterTestPosition, 0);
 
         shooterLeaderReport = testReportLayout
                 .add("Shooter Leader (" + ShooterConfiguration.leaderMotorPort + ")", false).getEntry();

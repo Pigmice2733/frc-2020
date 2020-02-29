@@ -49,7 +49,7 @@ public class Intake implements ISubsystem {
         solenoid = new DoubleSolenoid(IntakeConfiguration.forwardSolenoidPort, IntakeConfiguration.reverseSolenoidPort);
 
         ShuffleboardLayout testReportLayout = Shuffleboard.getTab(Dashboard.systemsTestTabName)
-                .getLayout("Intake", BuiltInLayouts.kList).withSize(2, 1).withPosition(2, 0);
+                .getLayout("Intake", BuiltInLayouts.kList).withSize(2, 1).withPosition(Dashboard.intakeTestPosition, 0);
 
         motorReport = testReportLayout.add("Motor (" + IntakeConfiguration.motorPort + ")", false).getEntry();
     }

@@ -63,7 +63,7 @@ public class Feeder implements ISubsystem {
         ShuffleboardLayout testReportLayout = Shuffleboard.getTab(Dashboard.systemsTestTabName)
                 .getLayout("Feeder", BuiltInLayouts.kList)
                 .withSize(2, 4)
-                .withPosition(0, 0);
+                .withPosition(Dashboard.feederTestPosition, 0);
 
         liftReport = testReportLayout.add("Lift Leader (" + liftMotor.getDeviceID() + ")", false).getEntry();
         liftFollowerReport = testReportLayout.add("Lift Follower (" + liftFollower.getDeviceID() + ")", false).getEntry();
