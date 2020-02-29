@@ -45,11 +45,14 @@ public class SystemConfig {
     }
 
     public static class ClimberConfiguration {
-        public static final int leaderMotorPort = 1;
-        public static final int followerMotorPort = 4;
+        public static final int leftWinchPort = 1;
+        public static final int rightWinchPort = 4;
 
-        public static final boolean leaderInverted = false;
-        public static final boolean followerInverted = true;
+        public static final boolean leftWinchInverted = false;
+        public static final boolean leftSensorPhase = true;
+
+        public static final boolean rightWinchInverted = true;
+        public static final boolean rightSensorPhase = true;
 
         public static final int forwardSolenoidPort = 5;
         public static final int reverseSolenoidPort = 4;
