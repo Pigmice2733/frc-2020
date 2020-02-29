@@ -14,7 +14,7 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
 
 public class Feeder implements ISubsystem {
     public enum LiftAction {
-        FEED(0.65), GRAB(0.25), BACKFEED(-0.2), HOLD(0.0);
+        FEED(0.65), GRAB(0.25), BACKFEED(-0.3), HOLD(0.0);
 
         public final double speed;
 

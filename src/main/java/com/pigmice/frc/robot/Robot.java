@@ -107,7 +107,7 @@ public class Robot extends TimedRobot {
         intake.run(controls.intake());
         intake.setPosition(controls.intake() ? Intake.Position.DOWN : Intake.Position.UP);
 
-        shooter.run(controls.shoot() ? Action.LONG_SHOT : Action.HOLD);
+        shooter.run(controls.shoot() ? Action.LONG_SHOT : (controls.backFeed() ? Action.CLEAR : Action.HOLD));
         shooter.setHood(controls.extendHood());
 
         if (controls.climbUp()) {
