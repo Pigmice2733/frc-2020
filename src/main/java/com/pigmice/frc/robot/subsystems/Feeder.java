@@ -27,7 +27,7 @@ public class Feeder implements ISubsystem {
     private final TalonSRX liftMotor, liftFollower;
 
     private final MotorTester.Config hopperTest = new MotorTester.Config(0.25, 0.1, 1.0);
-    private final MotorTester.Config liftTest = new MotorTester.Config(0.25, 0.1, 1.0);
+    private final MotorTester.Config liftTest = new MotorTester.Config(0.50, 0.1, 1.0);
     private final NetworkTableEntry liftReport, liftFollowerReport, hopperReport, hopperFollowerReport;
 
     private final double hopperSpeed = 0.5;

@@ -71,7 +71,7 @@ public class Shooter implements ISubsystem {
     private final CANEncoder encoder;
     private DoubleSolenoid hoodSolenoid;
 
-    private final MotorTester.Config motorTest = new MotorTester.Config(0.25, 0.1, 1.0);
+    private final MotorTester.Config motorTest = new MotorTester.Config(0.35, 0.1, 1.0);
 
     private double shooterRPM = 0.0;
     private double shooterVoltage = 0.0;

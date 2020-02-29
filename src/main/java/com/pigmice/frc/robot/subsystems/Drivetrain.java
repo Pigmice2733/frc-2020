@@ -27,6 +27,8 @@ public class Drivetrain implements ISubsystem {
     private Odometry odometry;
 
     private AHRS navx;
+    private double navxTestAngle;
+    private boolean navxTestPassed = false;
     private final NetworkTableEntry navxReport;
 
     private static Drivetrain instance = null;
@@ -148,7 +150,16 @@ public class Drivetrain implements ISubsystem {
 
     @Override
     public void test(double time) {
-        navxReport.setBoolean(navx.getAngle() != 0.0);
+        if(time < 0.1) {
+            navxTestAngle = navx.getAngle();
+            navxTestPassed = false;
+        }
+
+        if(!navxTestPassed) {
+            navxTestPassed = navx.getAngle() != navxTestAngle;
+        }
+
+        navxReport.setBoolean(navxTestPassed);
     }
 
     public void setCoastMode(boolean coasting) {
