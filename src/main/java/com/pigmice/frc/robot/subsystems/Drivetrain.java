@@ -4,13 +4,20 @@ import com.kauailabs.navx.frc.AHRS;
 import com.pigmice.frc.lib.utils.Odometry;
 import com.pigmice.frc.lib.utils.Odometry.Pose;
 import com.pigmice.frc.lib.utils.Utils;
+import com.pigmice.frc.robot.Dashboard;
+import com.pigmice.frc.robot.subsystems.SystemConfig.DrivetrainConfiguration;
 import com.revrobotics.CANEncoder;
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMax.IdleMode;
+import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
 
 public class Drivetrain implements ISubsystem {
-    private final CANSparkMax leftDrive, rightDrive;
+    private final CANSparkMax leftDrive, rightDrive, rightFollower, leftFollower;
     private final CANEncoder leftEncoder, rightEncoder;
 
     private double leftDemand, rightDemand;
@@ -19,24 +26,61 @@ public class Drivetrain implements ISubsystem {
     private Odometry odometry;
 
     private AHRS navx;
+    private double navxTestAngle;
+    private boolean navxTestPassed = false;
+    private final NetworkTableEntry navxReport;
 
-    private static final double wheelBase = 0.603;
-    private static final double drivetrainDistanceConversion = 16.13;
+    private final NetworkTableEntry xDisplay, yDisplay, headingDisplay, leftEncoderDisplay, rightEncoderDisplay;
 
-    public Drivetrain(CANSparkMax leftDrive, CANSparkMax rightDrive, AHRS navx) {
-        this.leftDrive = leftDrive;
-        this.rightDrive = rightDrive;
-        this.navx = navx;
+    private static Drivetrain instance = null;
+
+    public static Drivetrain getInstance() {
+        if (instance == null) {
+            instance = new Drivetrain();
+        }
+
+        return instance;
+    }
+
+    private Drivetrain() {
+        rightDrive = new CANSparkMax(DrivetrainConfiguration.frontRightMotorPort, MotorType.kBrushless);
+        rightFollower = new CANSparkMax(DrivetrainConfiguration.backRightMotorPort, MotorType.kBrushless);
+        leftDrive = new CANSparkMax(DrivetrainConfiguration.frontLeftMotorPort, MotorType.kBrushless);
+        leftFollower = new CANSparkMax(DrivetrainConfiguration.backLeftMotorPort, MotorType.kBrushless);
+
+        rightDrive.setInverted(true);
+        leftFollower.follow(leftDrive);
+        rightFollower.follow(rightDrive);
+
+        navx = new AHRS(DrivetrainConfiguration.navxPort);
+
+        ShuffleboardLayout testReportLayout = Shuffleboard.getTab(Dashboard.systemsTestTabName)
+                .getLayout("Drivetrain", BuiltInLayouts.kList)
+                .withSize(2, 1)
+                .withPosition(Dashboard.drivetrainTestPosition, 0);
+
+        navxReport = testReportLayout.add("NavX", false).getEntry();
 
         leftEncoder = leftDrive.getEncoder();
         rightEncoder = rightDrive.getEncoder();
 
-        leftEncoder.setPositionConversionFactor(1.0 / drivetrainDistanceConversion);
-        rightEncoder.setPositionConversionFactor(1.0 / drivetrainDistanceConversion);
+        leftEncoder.setPositionConversionFactor(1.0 / DrivetrainConfiguration.rotationToDistanceConversion);
+        rightEncoder.setPositionConversionFactor(1.0 / DrivetrainConfiguration.rotationToDistanceConversion);
+
+        ShuffleboardLayout odometryLayout = Shuffleboard.getTab(Dashboard.developmentTabName)
+                .getLayout("Odometry", BuiltInLayouts.kList).withSize(2, 5)
+                .withPosition(Dashboard.shooterDisplayPosition, 0);
+
+        xDisplay = odometryLayout.add("X", 0.0).getEntry();
+        yDisplay = odometryLayout.add("Y", 0.0).getEntry();
+        headingDisplay = odometryLayout.add("Heading", 0.0).getEntry();
+        leftEncoderDisplay = odometryLayout.add("Left Encoder", 0).getEntry();
+        rightEncoderDisplay = odometryLayout.add("Right Encoder", 0).getEntry();
 
         odometry = new Odometry(new Pose(0.0, 0.0, 0.0));
     }
 
+    @Override
     public void initialize() {
         leftPosition = 0.0;
         rightPosition = 0.0;
@@ -53,16 +97,18 @@ public class Drivetrain implements ISubsystem {
         navx.setAngleAdjustment(navx.getAngleAdjustment() - navx.getAngle() - 90.0);
     }
 
+    @Override
     public void updateDashboard() {
         Pose currentPose = odometry.getPose();
 
-        SmartDashboard.putNumber("Robot X", currentPose.getX());
-        SmartDashboard.putNumber("Robot Y", currentPose.getY());
-        SmartDashboard.putNumber("Robot Heading", currentPose.getHeading());
-        SmartDashboard.putNumber("Left", leftPosition);
-        SmartDashboard.putNumber("Right", rightPosition);
+        xDisplay.setNumber(currentPose.getX());
+        yDisplay.setNumber(currentPose.getY());
+        headingDisplay.setNumber(currentPose.getHeading());
+        leftEncoderDisplay.setNumber(leftPosition);
+        rightEncoderDisplay.setNumber(rightPosition);
     }
 
+    @Override
     public void updateInputs() {
         leftPosition = leftEncoder.getPosition();
         rightPosition = rightEncoder.getPosition();
@@ -93,13 +139,13 @@ public class Drivetrain implements ISubsystem {
         double leftSpeed = forwardSpeed;
         double rightSpeed = forwardSpeed;
 
-        if(!Utils.almostEquals(forwardSpeed, 0.0)) {
-            leftSpeed = forwardSpeed * (1 + (curvature * 0.5 * wheelBase));
-            rightSpeed = forwardSpeed * (1 - (curvature * 0.5 * wheelBase));
+        if (!Utils.almostEquals(forwardSpeed, 0.0)) {
+            leftSpeed = forwardSpeed * (1 + (curvature * 0.5 * DrivetrainConfiguration.wheelBase));
+            rightSpeed = forwardSpeed * (1 - (curvature * 0.5 * DrivetrainConfiguration.wheelBase));
         }
 
         leftDemand = leftSpeed;
-        rightDemand =  rightSpeed;
+        rightDemand = rightSpeed;
     }
 
     public void stop() {
@@ -107,6 +153,7 @@ public class Drivetrain implements ISubsystem {
         rightDemand = 0.0;
     }
 
+    @Override
     public void updateOutputs() {
         leftDrive.set(leftDemand);
         rightDrive.set(rightDemand);
@@ -115,6 +162,25 @@ public class Drivetrain implements ISubsystem {
         rightDemand = 0.0;
     }
 
-    public void test() {
+    @Override
+    public void test(double time) {
+        if(time < 0.1) {
+            navxTestAngle = navx.getAngle();
+            navxTestPassed = false;
+        }
+
+        if(!navxTestPassed) {
+            navxTestPassed = navx.getAngle() != navxTestAngle;
+        }
+
+        navxReport.setBoolean(navxTestPassed);
+    }
+
+    public void setCoastMode(boolean coasting) {
+        CANSparkMax.IdleMode newMode = coasting ? IdleMode.kCoast : IdleMode.kBrake;
+        leftDrive.setIdleMode(newMode);
+        rightDrive.setIdleMode(newMode);
+        leftFollower.setIdleMode(newMode);
+        rightFollower.setIdleMode(newMode);
     }
 }

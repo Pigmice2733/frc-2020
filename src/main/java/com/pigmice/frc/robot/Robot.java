@@ -6,8 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-import com.kauailabs.navx.frc.AHRS;
 import com.pigmice.frc.robot.autonomous.Autonomous;
 import com.pigmice.frc.robot.autonomous.LeaveLine;
 import com.pigmice.frc.robot.autonomous.TrenchFiveBall;
@@ -18,16 +16,15 @@ import com.pigmice.frc.robot.subsystems.Feeder;
 import com.pigmice.frc.robot.subsystems.Feeder.LiftAction;
 import com.pigmice.frc.robot.subsystems.ISubsystem;
 import com.pigmice.frc.robot.subsystems.Intake;
+import com.pigmice.frc.robot.subsystems.LEDs;
 import com.pigmice.frc.robot.subsystems.Shooter;
 import com.pigmice.frc.robot.subsystems.Shooter.Action;
-import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
-import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 
 public class Robot extends TimedRobot {
     private Drivetrain drivetrain;
@@ -35,6 +32,7 @@ public class Robot extends TimedRobot {
     private Intake intake;
     private Feeder feeder;
     private Climber climber;
+    private LEDs leds;
 
     private final List<ISubsystem> subsystems = new ArrayList<>();
 
@@ -43,15 +41,18 @@ public class Robot extends TimedRobot {
     private List<Autonomous> autoRoutines = new ArrayList<>();
     private Autonomous autonomous;
 
+    private double testStartTime;
+
     @Override
     public void robotInit() {
         displayDeployTimestamp();
 
-        drivetrain = setupDrivetrain();
-        shooter = setupShooter();
-        feeder = setupFeeder();
-        intake = setupIntake();
-        climber = setupClimber();
+        drivetrain = Drivetrain.getInstance();
+        shooter = Shooter.getInstance();
+        feeder = Feeder.getInstance();
+        intake = Intake.getInstance();
+        climber = Climber.getInstance();
+        leds = LEDs.getInstance();
 
         subsystems.add(drivetrain);
         subsystems.add(shooter);
@@ -69,6 +70,7 @@ public class Robot extends TimedRobot {
 
     @Override
     public void autonomousInit() {
+        drivetrain.setCoastMode(false);
         subsystems.forEach((ISubsystem subsystem) -> subsystem.initialize());
 
         autonomous = Autonomous.getSelected();
@@ -87,6 +89,7 @@ public class Robot extends TimedRobot {
 
     @Override
     public void teleopInit() {
+        drivetrain.setCoastMode(false);
         subsystems.forEach((ISubsystem subsystem) -> subsystem.initialize());
     }
 
@@ -105,12 +108,12 @@ public class Robot extends TimedRobot {
         intake.run(controls.intake());
         intake.setPosition(controls.intake() ? Intake.Position.DOWN : Intake.Position.UP);
 
-        shooter.run(controls.shoot() ? Action.LONG_SHOT : Action.HOLD);
+        shooter.run(controls.shoot() ? Action.LONG_SHOT : (controls.backFeed() ? Action.CLEAR : Action.HOLD));
         shooter.setHood(controls.extendHood());
 
-        if(controls.climbUp()) {
+        if (controls.climbUp()) {
             climber.driveUp();
-        } else if(controls.climbDown()) {
+        } else if (controls.climbDown()) {
             climber.driveDown();
         } else {
             climber.stop();
@@ -122,11 +125,17 @@ public class Robot extends TimedRobot {
 
     @Override
     public void testInit() {
-        subsystems.forEach((ISubsystem subsystem) -> subsystem.test());
+        testStartTime = Timer.getFPGATimestamp();
     }
 
     @Override
     public void testPeriodic() {
+        subsystems.forEach((ISubsystem subsystem) -> subsystem.test(Timer.getFPGATimestamp() - testStartTime));
+    }
+
+    @Override
+    public void disabledInit() {
+        drivetrain.setCoastMode(true);
     }
 
     @Override
@@ -135,77 +144,29 @@ public class Robot extends TimedRobot {
         subsystems.forEach((ISubsystem subsystem) -> subsystem.updateDashboard());
     }
 
+    @Override
+    public void robotPeriodic() {
+        leds.updateOutputs();
+    }
+
     private void displayDeployTimestamp() {
         FileInputStream file;
         Properties properties = new Properties();
+
+        NetworkTableEntry timestampDisplay = Shuffleboard.getTab(Dashboard.developmentTabName)
+                .add("Deploy Timestamp", "none")
+                .withSize(2, 1)
+                .withPosition(Dashboard.deployTimestampPosition, 0)
+                .getEntry();
 
         try {
             Path filePath = Filesystem.getDeployDirectory().toPath().resolve("deployTimestamp.properties");
             file = new FileInputStream(filePath.toFile());
             properties.load(file);
         } catch (Exception e) {
-            SmartDashboard.putString("Deploy Timestamp", "none");
             return;
         }
 
-        SmartDashboard.putString("Deploy Timestamp", properties.getProperty("DEPLOY_TIMESTAMP"));
-    }
-
-    private Drivetrain setupDrivetrain() {
-        CANSparkMax frontRight = new CANSparkMax(1, MotorType.kBrushless);
-        CANSparkMax backRight = new CANSparkMax(2, MotorType.kBrushless);
-        CANSparkMax frontLeft = new CANSparkMax(3, MotorType.kBrushless);
-        CANSparkMax backLeft = new CANSparkMax(4, MotorType.kBrushless);
-
-        frontRight.setInverted(true);
-        backLeft.follow(frontLeft);
-        backRight.follow(frontRight);
-
-        AHRS navx = new AHRS(SPI.Port.kMXP);
-
-        return new Drivetrain(frontLeft, frontRight, navx);
-    }
-
-    private Shooter setupShooter() {
-        CANSparkMax motor = new CANSparkMax(5, MotorType.kBrushless);
-        CANSparkMax follower = new CANSparkMax(6, MotorType.kBrushless);
-
-        motor.setInverted(false);
-
-        follower.follow(motor, true);
-
-        return new Shooter(motor, new DoubleSolenoid(3, 2));
-    }
-
-    private Intake setupIntake() {
-        TalonSRX motor = new TalonSRX(7);
-
-        motor.setInverted(true);
-
-        return new Intake(motor, new DoubleSolenoid(1, 0));
-    }
-
-    private Feeder setupFeeder() {
-        TalonSRX liftLeader = new TalonSRX(6);
-        TalonSRX liftFollower = new TalonSRX(3);
-        liftFollower.follow(liftLeader);
-        liftFollower.setInverted(true);
-
-        TalonSRX hopperLeader = new TalonSRX(2);
-        TalonSRX hopperFollower = new TalonSRX(5);
-        hopperFollower.follow(hopperLeader);
-        hopperFollower.setInverted(true);
-
-        return new Feeder(hopperLeader, liftLeader);
-    }
-
-    private Climber setupClimber() {
-        TalonSRX climberLeader = new TalonSRX(1);
-        TalonSRX climberFollower = new TalonSRX(4);
-
-        climberFollower.follow(climberLeader);
-        climberFollower.setInverted(true);
-
-        return new Climber(climberLeader, new DoubleSolenoid(5, 4));
+        timestampDisplay.forceSetString(properties.getProperty("DEPLOY_TIMESTAMP"));
     }
 }

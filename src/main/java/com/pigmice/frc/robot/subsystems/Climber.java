@@ -1,45 +1,74 @@
 package com.pigmice.frc.robot.subsystems;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.pigmice.frc.lib.utils.Range;
+import com.pigmice.frc.robot.subsystems.SystemConfig.ClimberConfiguration;
 
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Climber implements ISubsystem {
-    private final TalonSRX motor;
+    private final TalonSRX leftWinch, rightWinch;
+
     private final DoubleSolenoid pistons;
+    private Value targetPistonState = Value.kReverse;
+    private Value previousPistonState = Value.kOff;
 
-    private final double upSpeed = 0.5;
-    private double downSpeed = -0.4;
+    private double targetPosition = 0.0;
+    private final Range sensorRange = new Range(0, 40000);
+    private final double climbRate = sensorRange.size() / (50 * 4);
 
-    private double speed = 0.0;
-    private boolean throwPistons = false;
+    private static Climber instance = null;
 
-    public Climber(TalonSRX motor, DoubleSolenoid pistons) {
-        this.motor = motor;
-        this.pistons = pistons;
+    public static Climber getInstance() {
+        if (instance == null) {
+            instance = new Climber();
+        }
 
-        SmartDashboard.putNumber("Climber power", 0.0);
+        return instance;
+    }
+
+    public Climber() {
+        leftWinch = new TalonSRX(ClimberConfiguration.leftWinchPort);
+        leftWinch.setInverted(ClimberConfiguration.leftWinchInverted);
+
+        leftWinch.config_kP(0, 0.2, 0);
+        leftWinch.config_kI(0, 0.0, 0);
+
+        leftWinch.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 0);
+        leftWinch.setSensorPhase(ClimberConfiguration.leftSensorPhase);
+        leftWinch.setSelectedSensorPosition(0);
+
+        rightWinch = new TalonSRX(ClimberConfiguration.rightWinchPort);
+        rightWinch.setInverted(ClimberConfiguration.rightWinchInverted);
+
+        rightWinch.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 0);
+        rightWinch.setSensorPhase(ClimberConfiguration.rightSensorPhase);
+        rightWinch.setSelectedSensorPosition(0);
+
+        rightWinch.config_kP(0, 0.2, 0);
+        rightWinch.config_kI(0, 0.0, 0);
+
+        pistons = new DoubleSolenoid(ClimberConfiguration.forwardSolenoidPort,
+                ClimberConfiguration.reverseSolenoidPort);
+        pistons.set(Value.kReverse);
     }
 
     @Override
     public void initialize() {
-        speed = 0.0;
     }
 
     public void driveUp() {
-        speed = upSpeed;
-        throwPistons = true;
+        targetPosition += climbRate;
     }
 
     public void driveDown() {
-        speed = downSpeed;
+        targetPosition -= climbRate;
     }
 
     public void stop() {
-        speed = 0.0;
     }
 
     @Override
@@ -48,23 +77,28 @@ public class Climber implements ISubsystem {
 
     @Override
     public void updateInputs() {
-        downSpeed = SmartDashboard.getNumber("Climber power", 0.0);
+        double position = 0.5 * (leftWinch.getSelectedSensorPosition() + rightWinch.getSelectedSensorPosition());
+
+        if (position < 4096 && targetPosition < 4096) {
+            targetPistonState = Value.kReverse;
+        } else {
+            targetPistonState = Value.kForward;
+        }
     }
 
     @Override
     public void updateOutputs() {
-        motor.set(ControlMode.PercentOutput, speed);
+        targetPosition = sensorRange.clamp(targetPosition);
+        leftWinch.set(ControlMode.Position, targetPosition);
+        rightWinch.set(ControlMode.Position, targetPosition);
 
-        if(pistons.get() == Value.kOff) {
-            pistons.set(Value.kForward);
-        }
-
-        if(pistons.get() == Value.kForward && throwPistons) {
-            pistons.set(Value.kReverse);
+        if (targetPistonState != previousPistonState) {
+            pistons.set(targetPistonState);
+            previousPistonState = targetPistonState;
         }
     }
 
     @Override
-    public void test() {
+    public void test(double currentTestTime) {
     }
 }

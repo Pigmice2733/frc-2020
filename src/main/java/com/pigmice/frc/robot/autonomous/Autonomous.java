@@ -3,6 +3,7 @@ package com.pigmice.frc.robot.autonomous;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.pigmice.frc.robot.Dashboard;
 import com.pigmice.frc.robot.autonomous.tasks.ITask;
 
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
@@ -28,7 +29,7 @@ public class Autonomous {
 
         chooser.addOption("None", new Autonomous());
 
-        Shuffleboard.getTab("SmartDashboard").add("Auto Selector", chooser).withWidget(BuiltInWidgets.kComboBoxChooser);
+        Shuffleboard.getTab(Dashboard.driverTabName).add("Auto Selector", chooser).withWidget(BuiltInWidgets.kComboBoxChooser);
     }
 
     public static Autonomous getSelected() {

@@ -2,12 +2,20 @@ package com.pigmice.frc.robot.subsystems;
 
 import com.pigmice.frc.lib.controllers.TakeBackHalf;
 import com.pigmice.frc.lib.motion.setpoint.ISetpoint;
+import com.pigmice.frc.robot.Dashboard;
+import com.pigmice.frc.robot.MotorTester;
+import com.pigmice.frc.robot.MotorTester.TestStatus;
+import com.pigmice.frc.robot.subsystems.SystemConfig.ShooterConfiguration;
 import com.revrobotics.CANEncoder;
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
+import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
 
 public class Shooter implements ISubsystem {
     private static class ShooterSetpoint implements ISetpoint {
@@ -56,11 +64,11 @@ public class Shooter implements ISubsystem {
         }
     }
 
-    private final CANSparkMax motor;
+    private final CANSparkMax motor, follower;
     private final CANEncoder encoder;
     private DoubleSolenoid hoodSolenoid;
 
-    private final double reduction = 1.0/1.5;
+    private final MotorTester.Config motorTest = new MotorTester.Config(0.35, 0.1, 1.0);
 
     private double shooterRPM = 0.0;
     private double shooterVoltage = 0.0;
@@ -71,12 +79,52 @@ public class Shooter implements ISubsystem {
 
     private final TakeBackHalf controller = new TakeBackHalf(0.5e-5, 0.8);
 
-    public Shooter(CANSparkMax motor, DoubleSolenoid hoodSolenoid) {
-        this.motor = motor;
-        this.hoodSolenoid = hoodSolenoid;
+    private static Shooter instance = null;
+
+    private final NetworkTableEntry shooterLeaderReport;
+    private final NetworkTableEntry shooterFollowerReport;
+
+    private final NetworkTableEntry shooterRPMDisplay, shooterVoltageDisplay, shooterReadyDisplay;
+
+    public static Shooter getInstance() {
+        if(instance == null) {
+            instance = new Shooter();
+        }
+
+        return instance;
+    }
+
+    public Shooter() {
+        motor = new CANSparkMax(ShooterConfiguration.leaderMotorPort, MotorType.kBrushless);
+        motor.setInverted(ShooterConfiguration.inverted);
+
+        follower = new CANSparkMax(ShooterConfiguration.followerMotorPort, MotorType.kBrushless);
+        follower.follow(motor, true);
+
         encoder = motor.getEncoder();
 
-        encoder.setVelocityConversionFactor(1.0/reduction);
+        hoodSolenoid = new DoubleSolenoid(ShooterConfiguration.forwardSolenoidPort, ShooterConfiguration.reverseSolenoidPort);
+
+        encoder.setVelocityConversionFactor(1.0 / ShooterConfiguration.reduction);
+
+        ShuffleboardLayout testReportLayout = Shuffleboard.getTab(Dashboard.systemsTestTabName)
+                .getLayout("Shooter", BuiltInLayouts.kList)
+                .withSize(2, 2)
+                .withPosition(Dashboard.shooterTestPosition, 0);
+
+        shooterLeaderReport = testReportLayout
+                .add("Shooter Leader (" + ShooterConfiguration.leaderMotorPort + ")", false).getEntry();
+        shooterFollowerReport = testReportLayout
+                .add("Shooter Follower (" + ShooterConfiguration.followerMotorPort + ")", false).getEntry();
+
+        ShuffleboardLayout displayLayout = Shuffleboard.getTab(Dashboard.developmentTabName)
+                .getLayout("Shooter", BuiltInLayouts.kList)
+                .withSize(2, 7)
+                .withPosition(Dashboard.shooterDisplayPosition, 0);
+
+        shooterRPMDisplay = displayLayout.add("Shooter RPM", 0.0).getEntry();
+        shooterVoltageDisplay = displayLayout.add("Shooter Voltage", 0.0).getEntry();
+        shooterReadyDisplay = displayLayout.add("Shooter Ready", false).getEntry();
     }
 
     @Override
@@ -113,9 +161,9 @@ public class Shooter implements ISubsystem {
 
     @Override
     public void updateDashboard() {
-        SmartDashboard.putNumber("Shooter RPM", shooterRPM);
-        SmartDashboard.putNumber("Shooter Voltage", shooterVoltage);
-        SmartDashboard.putBoolean("Shooter Ready", isReady());
+        shooterRPMDisplay.setNumber(shooterRPM);
+        shooterVoltageDisplay.setNumber(shooterVoltage);
+        shooterReadyDisplay.setBoolean(isReady());
     }
 
     @Override
@@ -143,6 +191,11 @@ public class Shooter implements ISubsystem {
     }
 
     @Override
-    public void test() {
+    public void test(double currentTestTime) {
+        TestStatus status = MotorTester.Test(motor, motorTest, currentTestTime);
+        shooterLeaderReport.setBoolean(status == TestStatus.PASS);
+
+        status = MotorTester.Test(follower, motorTest, currentTestTime);
+        shooterFollowerReport.setBoolean(status == TestStatus.PASS);
     }
 }
