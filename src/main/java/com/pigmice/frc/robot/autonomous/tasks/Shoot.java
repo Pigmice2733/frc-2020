@@ -11,14 +11,15 @@ public class Shoot implements ITask {
     private final Shooter shooter;
     private final Feeder feeder;
 
-    private final double shootLength = 1.2;
+    private final double shootLength;
 
     private double startTime = 0.0;
     private boolean shootingStarted = false;
 
-    public Shoot(Shooter shooter, Feeder feeder) {
+    public Shoot(Shooter shooter, Feeder feeder, double shootLength) {
         this.shooter = shooter;
         this.feeder = feeder;
+        this.shootLength = shootLength;
     }
 
     @Override

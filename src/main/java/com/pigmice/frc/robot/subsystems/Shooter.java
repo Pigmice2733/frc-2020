@@ -49,19 +49,17 @@ public class Shooter implements ISubsystem {
     }
 
     public enum Action {
-        LONG_SHOT(7000, 0.87, true),
+        LONG_SHOT(8250, 0.87, true),
         MEDIUM_SHOT(5200, 0.65, true),
-        SHORT_SHOT(4000, 0.5, true),
+        SHORT_SHOT(4000, 0.45, true),
         CLEAR(-100, -0.1, false),
         HOLD(0, 0, false);
 
-        private final double rpm;
-        private final double voltage;
+        private final ShooterSetpoint setpoint;
         private final boolean closedLoop;
 
         private Action(double rpm, double voltage, boolean closedLoop) {
-            this.rpm = rpm;
-            this.voltage = voltage;
+            this.setpoint = new ShooterSetpoint(rpm, voltage);
             this.closedLoop = closedLoop;
         }
     }
@@ -76,8 +74,6 @@ public class Shooter implements ISubsystem {
     private double shooterVoltage = 0.0;
     private Value hoodState = Value.kOff;
     private Value previousHoodState = Value.kOff;
-
-    private ShooterSetpoint targetRPM = new ShooterSetpoint(5200, 0.5);
 
     private Action action = Action.HOLD;
 
@@ -140,7 +136,7 @@ public class Shooter implements ISubsystem {
 
         action = Action.HOLD;
 
-        controller.updateTargetOutput(targetRPM.output);
+        controller.updateTargetOutput(action.setpoint.output);
         controller.initialize(0.0, 1.0);
 
         updateDashboard();
@@ -148,6 +144,7 @@ public class Shooter implements ISubsystem {
 
     public void run(Action action) {
         if(!this.action.closedLoop && action.closedLoop) {
+            controller.updateTargetOutput(action.setpoint.output);
             controller.initialize(shooterRPM, 1.0);
         }
 
@@ -159,7 +156,7 @@ public class Shooter implements ISubsystem {
     }
 
     public boolean isReady() {
-        return Math.abs((shooterRPM - targetRPM.rpm) / targetRPM.rpm) < 0.01;
+        return Math.abs((shooterRPM - action.setpoint.rpm) / action.setpoint.rpm) < 0.01;
     }
 
     @Override
@@ -179,9 +176,9 @@ public class Shooter implements ISubsystem {
         double output = 0.0;
 
         if(action.closedLoop) {
-            output = controller.calculateOutput(shooterRPM, targetRPM);
+            output = controller.calculateOutput(shooterRPM, action.setpoint);
         } else {
-            output = action.voltage;
+            output = action.setpoint.output;
         }
 
         shooterVoltage = output * 100.0;

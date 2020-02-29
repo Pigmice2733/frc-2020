@@ -21,8 +21,8 @@ public class TrenchSixBall extends Autonomous {
         PathFollower acquisition = constructAcquisition(drivetrain, intake, feeder);
         PathFollower returnAndSpinUp = constructReturnPath(drivetrain, shooter, intake, feeder);
 
-        this.subroutines = Arrays.asList(new Shoot(shooter, feeder), acquisition, returnAndSpinUp,
-                new Shoot(shooter, feeder));
+        this.subroutines = Arrays.asList(new Shoot(shooter, feeder, 1.2), acquisition, returnAndSpinUp,
+                new Shoot(shooter, feeder, 1.2));
     }
 
     public void initialize() {
@@ -56,7 +56,7 @@ public class TrenchSixBall extends Autonomous {
 
         Path path = new Path(positions, velocities);
 
-        IAction powerCellAcquisition = new Acquire(intake, feeder);
+        IAction powerCellAcquisition = new Acquire(intake, feeder, true);
 
         PathFollower follower = new PathFollower(drivetrain, path, true, 1.5);
         follower.addAction(0, 6, powerCellAcquisition);
@@ -88,7 +88,7 @@ public class TrenchSixBall extends Autonomous {
         Path path = new Path(positions, velocities);
 
         IAction spinUp = new SpinUp(shooter, feeder);
-        IAction powerCellAcquisition = new Acquire(intake, feeder);
+        IAction powerCellAcquisition = new Acquire(intake, feeder, false);
 
         PathFollower follower = new PathFollower(drivetrain, path, false, 1.0);
         follower.addAction(1, 3, spinUp);
