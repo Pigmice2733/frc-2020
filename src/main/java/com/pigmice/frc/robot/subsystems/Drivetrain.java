@@ -43,7 +43,7 @@ public class Drivetrain implements ISubsystem {
         rightDrive = new CANSparkMax(DrivetrainConfiguration.frontRightMotorPort, MotorType.kBrushless);
         rightFollower = new CANSparkMax(DrivetrainConfiguration.backRightMotorPort, MotorType.kBrushless);
         leftDrive = new CANSparkMax(DrivetrainConfiguration.frontLeftMotorPort, MotorType.kBrushless);
-        leftFollower = new CANSparkMax(DrivetrainConfiguration.backRightMotorPort, MotorType.kBrushless);
+        leftFollower = new CANSparkMax(DrivetrainConfiguration.backLeftMotorPort, MotorType.kBrushless);
 
         rightDrive.setInverted(true);
         leftFollower.follow(leftDrive);
