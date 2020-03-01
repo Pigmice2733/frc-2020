@@ -14,6 +14,7 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
 
@@ -122,8 +123,10 @@ public class Shooter implements ISubsystem {
                 .withSize(2, 7)
                 .withPosition(Dashboard.shooterDisplayPosition, 0);
 
-        shooterRPMDisplay = displayLayout.add("Shooter RPM", 0.0).getEntry();
-        shooterVoltageDisplay = displayLayout.add("Shooter Voltage", 0.0).getEntry();
+        shooterRPMDisplay = displayLayout.add("Shooter RPM", 0.0)
+                .withWidget(BuiltInWidgets.kGraph).getEntry();
+        shooterVoltageDisplay = displayLayout.add("Shooter Voltage", 0.0)
+                .withWidget(BuiltInWidgets.kGraph).getEntry();
         shooterReadyDisplay = displayLayout.add("Shooter Ready", false).getEntry();
     }
 

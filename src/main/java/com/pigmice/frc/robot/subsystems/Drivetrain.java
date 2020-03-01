@@ -69,7 +69,7 @@ public class Drivetrain implements ISubsystem {
 
         ShuffleboardLayout odometryLayout = Shuffleboard.getTab(Dashboard.developmentTabName)
                 .getLayout("Odometry", BuiltInLayouts.kList).withSize(2, 5)
-                .withPosition(Dashboard.shooterDisplayPosition, 0);
+                .withPosition(Dashboard.drivetrainDisplayPosition, 0);
 
         xDisplay = odometryLayout.add("X", 0.0).getEntry();
         yDisplay = odometryLayout.add("Y", 0.0).getEntry();
