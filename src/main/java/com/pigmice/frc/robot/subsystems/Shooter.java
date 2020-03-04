@@ -50,11 +50,8 @@ public class Shooter implements ISubsystem {
     }
 
     public enum Action {
-        LONG_SHOT(8250, 0.87, true),
-        MEDIUM_SHOT(5200, 0.65, true),
-        SHORT_SHOT(4000, 0.45, true),
-        CLEAR(-100, -0.1, false),
-        HOLD(0, 0, false);
+        LONG_SHOT(8250, 0.87, true), MEDIUM_SHOT(5200, 0.65, true), SHORT_SHOT(4000, 0.45, true),
+        CLEAR(-100, -0.1, false), HOLD(0, 0, false);
 
         private final ShooterSetpoint setpoint;
         private final boolean closedLoop;
@@ -88,7 +85,7 @@ public class Shooter implements ISubsystem {
     private final NetworkTableEntry shooterRPMDisplay, shooterVoltageDisplay, shooterReadyDisplay;
 
     public static Shooter getInstance() {
-        if(instance == null) {
+        if (instance == null) {
             instance = new Shooter();
         }
 
@@ -104,13 +101,13 @@ public class Shooter implements ISubsystem {
 
         encoder = motor.getEncoder();
 
-        hoodSolenoid = new DoubleSolenoid(ShooterConfiguration.forwardSolenoidPort, ShooterConfiguration.reverseSolenoidPort);
+        hoodSolenoid = new DoubleSolenoid(ShooterConfiguration.forwardSolenoidPort,
+                ShooterConfiguration.reverseSolenoidPort);
 
         encoder.setVelocityConversionFactor(1.0 / ShooterConfiguration.reduction);
 
         ShuffleboardLayout testReportLayout = Shuffleboard.getTab(Dashboard.systemsTestTabName)
-                .getLayout("Shooter", BuiltInLayouts.kList)
-                .withSize(2, 2)
+                .getLayout("Shooter", BuiltInLayouts.kList).withSize(2, 2)
                 .withPosition(Dashboard.shooterTestPosition, 0);
 
         shooterLeaderReport = testReportLayout
@@ -119,14 +116,11 @@ public class Shooter implements ISubsystem {
                 .add("Shooter Follower (" + ShooterConfiguration.followerMotorPort + ")", false).getEntry();
 
         ShuffleboardLayout displayLayout = Shuffleboard.getTab(Dashboard.developmentTabName)
-                .getLayout("Shooter", BuiltInLayouts.kList)
-                .withSize(2, 7)
+                .getLayout("Shooter", BuiltInLayouts.kList).withSize(2, 7)
                 .withPosition(Dashboard.shooterDisplayPosition, 0);
 
-        shooterRPMDisplay = displayLayout.add("Shooter RPM", 0.0)
-                .withWidget(BuiltInWidgets.kGraph).getEntry();
-        shooterVoltageDisplay = displayLayout.add("Shooter Voltage", 0.0)
-                .withWidget(BuiltInWidgets.kGraph).getEntry();
+        shooterRPMDisplay = displayLayout.add("Shooter RPM", 0.0).withWidget(BuiltInWidgets.kGraph).getEntry();
+        shooterVoltageDisplay = displayLayout.add("Shooter Voltage", 0.0).withWidget(BuiltInWidgets.kGraph).getEntry();
         shooterReadyDisplay = displayLayout.add("Shooter Ready", false).getEntry();
     }
 
@@ -146,7 +140,7 @@ public class Shooter implements ISubsystem {
     }
 
     public void run(Action action) {
-        if(!this.action.closedLoop && action.closedLoop) {
+        if (!this.action.closedLoop && action.closedLoop) {
             controller.updateTargetOutput(action.setpoint.output);
             controller.initialize(shooterRPM, 1.0);
         }
@@ -178,7 +172,7 @@ public class Shooter implements ISubsystem {
     public void updateOutputs() {
         double output = 0.0;
 
-        if(action.closedLoop) {
+        if (action.closedLoop) {
             output = controller.calculateOutput(shooterRPM, action.setpoint);
         } else {
             output = action.setpoint.output;
@@ -187,7 +181,7 @@ public class Shooter implements ISubsystem {
         shooterVoltage = output * 100.0;
         motor.set(output);
 
-        if(hoodState != previousHoodState) {
+        if (hoodState != previousHoodState) {
             hoodSolenoid.set(hoodState);
             previousHoodState = hoodState;
         }

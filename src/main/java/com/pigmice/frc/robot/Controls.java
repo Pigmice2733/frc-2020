@@ -10,6 +10,7 @@ public class Controls {
     private interface DriverProfile {
         double driveSpeed();
         double turnSpeed();
+        boolean visionAlign();
     }
 
     private interface OperatorProfile {
@@ -45,6 +46,11 @@ public class Controls {
 
         @Override
         public boolean intake() {
+            return joystick.getRawButton(8);
+        }
+
+        @Override
+        public boolean visionAlign() {
             return joystick.getRawButton(8);
         }
 
@@ -98,6 +104,11 @@ public class Controls {
 
         @Override
         public boolean intake() {
+            return joystick.getTriggerAxis(Hand.kRight) > 0.5;
+        }
+
+        @Override
+        public boolean visionAlign() {
             return joystick.getTriggerAxis(Hand.kRight) > 0.5;
         }
 
@@ -205,5 +216,9 @@ public class Controls {
 
     public boolean climbDown() {
         return operator.climbDown();
+    }
+
+    public boolean visionAlign() {
+        return driver.visionAlign();
     }
 }

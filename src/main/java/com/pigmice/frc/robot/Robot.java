@@ -10,6 +10,7 @@ import com.pigmice.frc.robot.autonomous.Autonomous;
 import com.pigmice.frc.robot.autonomous.LeaveLine;
 import com.pigmice.frc.robot.autonomous.TrenchFiveBall;
 import com.pigmice.frc.robot.autonomous.TrenchSixBall;
+import com.pigmice.frc.robot.autonomous.VisionTest;
 import com.pigmice.frc.robot.subsystems.Climber;
 import com.pigmice.frc.robot.subsystems.Drivetrain;
 import com.pigmice.frc.robot.subsystems.Feeder;
@@ -65,6 +66,7 @@ public class Robot extends TimedRobot {
         autoRoutines.add(new TrenchSixBall(drivetrain, shooter, feeder, intake));
         autoRoutines.add(new TrenchFiveBall(drivetrain, shooter, feeder, intake));
         autoRoutines.add(new LeaveLine(drivetrain));
+        autoRoutines.add(new VisionTest(drivetrain, shooter, feeder));
         Autonomous.setOptions(autoRoutines);
     }
 
@@ -99,7 +101,13 @@ public class Robot extends TimedRobot {
 
         subsystems.forEach((ISubsystem subsystem) -> subsystem.updateInputs());
 
-        drivetrain.arcadeDrive(controls.driveSpeed(), controls.turnSpeed());
+        if (controls.visionAlign()) {
+            double output = Vision.update();
+            drivetrain.arcadeDrive(controls.driveSpeed(), output);
+        } else {
+            drivetrain.arcadeDrive(controls.driveSpeed(), controls.turnSpeed());
+            Vision.stop();
+        }
 
         feeder.runHopper(controls.feed() || controls.intake());
         feeder.runLift(
@@ -154,9 +162,7 @@ public class Robot extends TimedRobot {
         Properties properties = new Properties();
 
         NetworkTableEntry timestampDisplay = Shuffleboard.getTab(Dashboard.developmentTabName)
-                .add("Deploy Timestamp", "none")
-                .withSize(2, 1)
-                .withPosition(Dashboard.deployTimestampPosition, 0)
+                .add("Deploy Timestamp", "none").withSize(2, 1).withPosition(Dashboard.deployTimestampPosition, 0)
                 .getEntry();
 
         try {

@@ -1,111 +1,71 @@
 package com.pigmice.frc.robot;
 
-import edu.wpi.first.wpilibj.Notifier;
-import edu.wpi.first.wpilibj.SerialPort;
-import edu.wpi.first.wpilibj.Timer;
+import com.pigmice.frc.lib.controllers.PID;
+import com.pigmice.frc.lib.controllers.PIDGains;
+import com.pigmice.frc.lib.motion.setpoint.ISetpoint;
+import com.pigmice.frc.lib.motion.setpoint.Setpoint;
+import com.pigmice.frc.lib.utils.Range;
+
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
 
 public class Vision {
-    private static class SerialConfiguration {
-        private static final int BAUD_RATE = 115200;
-        private static final char TERMINATOR = '\n';
-        private static final SerialPort.Port PORT = SerialPort.Port.kUSB1;
+    private static final NetworkTable input = NetworkTableInstance.getDefault().getTable("Vision");
+    private static final NetworkTableEntry angleEntry = input.getEntry("targetAngle");
+    private static final NetworkTableEntry widthEntry = input.getEntry("targetWidth");
+    private static final NetworkTableEntry ledPercentEntry = input.getEntry("ledPercent");
+    private static final NetworkTableEntry targetVisibleEntry = input.getEntry("targetVisible");
 
-        private static final String START_DELIMITER = "[";
-        private static final String END_DELIMITER = "]";
-        private static final String DATA_SEPARATOR = ",";
-        private static final String NULL_RESPONSE = "NONE";
+    private static final ISetpoint alignmentSetpoint = new Setpoint(5.0, 0.0, 0.0, 0.0, 0.0);
+    private static final PID alignmentPID;
 
-        private static final int BUFFER_SIZE = 24;
+    static {
+        PIDGains gains = new PIDGains(-0.1 / 30, -0.005, 0.0, 0.0, 0.0, 0.0);
+        Range outputBounds = new Range(-0.2, 0.2);
+        alignmentPID = new PID(gains, outputBounds, 0.02);
     }
 
-    private static boolean enabled = false;
-    private static double lastInitAttempt = 0.0;
-    private static double initAttemptPeriod = 1.0;
+    private static final double ledPower = 30;
 
-    private static SerialPort port = null;
-    private static Notifier thread = new Notifier(Vision::update);
+    private static boolean currentlyAligning = false;
 
-    private static volatile double targetDistance = 0.0;
-    private static volatile double targetAngle = 0.0;
-    private static volatile boolean targetVisible = false;
+    public static double update() {
+        if(!targetIsVisible()) {
+            return 0.0;
+        }
 
-    private static StringBuilder readBuffer = new StringBuilder(SerialConfiguration.BUFFER_SIZE);
+        double angle = targetAngle();
 
-    public static void startProcessing() {
-        if (!enabled) {
-            enabled = true;
+        if(!currentlyAligning) {
+            currentlyAligning = true;
+            alignmentPID.initialize(angle, 0.0);
+            ledPercentEntry.setDouble(ledPower);
+        }
 
-            thread.startPeriodic(1.0 / 30.0);
+        return alignmentPID.calculateOutput(angle, alignmentSetpoint);
+    }
+
+    public static void stop() {
+        if(currentlyAligning) {
+            currentlyAligning = false;
+            ledPercentEntry.setDouble(0.0);
         }
     }
 
-    public static double getAngle() {
-        return targetAngle;
+    public static boolean targetIsVisible() {
+        return targetVisibleEntry.getBoolean(false);
     }
 
-    public static double getDistance() {
-        return targetDistance;
+    public static double targetWidth() {
+        return widthEntry.getDouble(0.0);
     }
 
-    public static boolean targetVisible() {
-        return targetVisible;
+    public static double targetAngle() {
+        return angleEntry.getDouble(0.0);
     }
 
-    private static void update() {
-        if (port == null) {
-            initPort();
-            return;
-        }
-
-        readBuffer.append(port.readString());
-
-        try {
-            parseInput();
-        } catch (Exception e) {
-            System.out.println(e);
-        }
-    }
-
-    private static void parseInput() {
-        int startIndex = readBuffer.lastIndexOf(SerialConfiguration.START_DELIMITER);
-        int separatorIndex = readBuffer.lastIndexOf(SerialConfiguration.DATA_SEPARATOR);
-        int endIndex = readBuffer.lastIndexOf(SerialConfiguration.END_DELIMITER);
-
-        if((endIndex - startIndex) == (SerialConfiguration.NULL_RESPONSE.length() + 1)) {
-            if(readBuffer.substring(startIndex + 1, endIndex).equals(SerialConfiguration.NULL_RESPONSE)) {
-                Vision.targetVisible = false;
-                return;
-            }
-        }
-
-        if (endIndex > startIndex && startIndex > -1) {
-            String distanceString = readBuffer.substring(startIndex + 1, separatorIndex);
-            String angleString = readBuffer.substring(separatorIndex + 1, endIndex);
-
-            targetDistance = Double.valueOf(distanceString);
-            targetAngle = Double.valueOf(angleString);
-
-            targetVisible = true;
-
-            readBuffer.delete(0, endIndex + 1);
-            return;
-        }
-    }
-
-    private static void initPort() {
-        double now = Timer.getFPGATimestamp();
-        if((now - lastInitAttempt) < initAttemptPeriod) {
-            return;
-        }
-
-        lastInitAttempt = now;
-        try {
-            port = new SerialPort(SerialConfiguration.BAUD_RATE, SerialConfiguration.PORT);
-
-            port.enableTermination(SerialConfiguration.TERMINATOR);
-            readBuffer.delete(0, SerialConfiguration.BUFFER_SIZE);
-        } catch (Exception e) {
-            System.out.println(e);
-        }
+    public static double alignmentError() {
+        return Math.abs(angleEntry.getDouble(0.0) - alignmentSetpoint.getPosition());
     }
 }

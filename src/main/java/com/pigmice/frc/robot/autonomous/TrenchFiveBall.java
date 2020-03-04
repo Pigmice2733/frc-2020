@@ -16,13 +16,14 @@ import com.pigmice.frc.robot.subsystems.Drivetrain;
 import com.pigmice.frc.robot.subsystems.Feeder;
 import com.pigmice.frc.robot.subsystems.Intake;
 import com.pigmice.frc.robot.subsystems.Shooter;
+import com.pigmice.frc.robot.subsystems.Shooter.Action;
 
 public class TrenchFiveBall extends Autonomous {
     public TrenchFiveBall(Drivetrain drivetrain, Shooter shooter, Feeder feeder, Intake intake) {
         PathFollower acquisition = constructAcquisition(drivetrain, intake, feeder);
         PathFollower returnAndSpinUp = constructReturnPath(drivetrain, shooter, intake, feeder);
 
-        this.subroutines = Arrays.asList(acquisition, returnAndSpinUp, new Shoot(shooter, feeder, 2.0));
+        this.subroutines = Arrays.asList(acquisition, returnAndSpinUp, new Shoot(shooter, feeder, 2.0, Action.SHORT_SHOT));
     }
 
     public void initialize() {

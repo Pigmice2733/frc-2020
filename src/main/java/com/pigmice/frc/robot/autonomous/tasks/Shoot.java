@@ -12,14 +12,16 @@ public class Shoot implements ITask {
     private final Feeder feeder;
 
     private final double shootLength;
+    private final Action action;
 
     private double startTime = 0.0;
     private boolean shootingStarted = false;
 
-    public Shoot(Shooter shooter, Feeder feeder, double shootLength) {
+    public Shoot(Shooter shooter, Feeder feeder, double shootLength, Action action) {
         this.shooter = shooter;
         this.feeder = feeder;
         this.shootLength = shootLength;
+        this.action = action;
     }
 
     @Override
@@ -30,7 +32,7 @@ public class Shoot implements ITask {
 
     @Override
     public boolean update() {
-        shooter.run(Action.SHORT_SHOT);
+        shooter.run(action);
 
         if (shooter.isReady() && !shootingStarted) {
             shootingStarted = true;
