@@ -19,7 +19,6 @@ import com.pigmice.frc.robot.subsystems.ISubsystem;
 import com.pigmice.frc.robot.subsystems.Intake;
 import com.pigmice.frc.robot.subsystems.LEDs;
 import com.pigmice.frc.robot.subsystems.Shooter;
-import com.pigmice.frc.robot.subsystems.Shooter.Action;
 
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -116,7 +115,18 @@ public class Robot extends TimedRobot {
         intake.run(controls.intake());
         intake.setPosition(controls.intake() ? Intake.Position.DOWN : Intake.Position.UP);
 
-        shooter.run(controls.shoot() ? Action.LONG_SHOT : (controls.backFeed() ? Action.CLEAR : Action.HOLD));
+        if(controls.shoot()) {
+            if(Vision.targetIsVisible()) {
+                shooter.setRange(Vision.targetDistance());
+            } else {
+                shooter.setRange(20 * 12);
+            }
+        } else if(controls.backFeed()) {
+            shooter.clear();
+        } else {
+            shooter.stop();
+        }
+
         shooter.setHood(controls.extendHood());
 
         if (controls.climbUp()) {

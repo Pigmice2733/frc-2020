@@ -15,15 +15,14 @@ import com.pigmice.frc.robot.subsystems.Drivetrain;
 import com.pigmice.frc.robot.subsystems.Feeder;
 import com.pigmice.frc.robot.subsystems.Intake;
 import com.pigmice.frc.robot.subsystems.Shooter;
-import com.pigmice.frc.robot.subsystems.Shooter.Action;
 
 public class TrenchSixBall extends Autonomous {
     public TrenchSixBall(Drivetrain drivetrain, Shooter shooter, Feeder feeder, Intake intake) {
         PathFollower acquisition = constructAcquisition(drivetrain, intake, feeder);
         PathFollower returnAndSpinUp = constructReturnPath(drivetrain, shooter, intake, feeder);
 
-        this.subroutines = Arrays.asList(new Shoot(shooter, feeder, 1.2, Action.SHORT_SHOT), acquisition, returnAndSpinUp,
-                new Shoot(shooter, feeder, 1.2, Action.SHORT_SHOT));
+        this.subroutines = Arrays.asList(new Shoot(shooter, feeder, 1.2, 120), acquisition, returnAndSpinUp,
+                new Shoot(shooter, feeder, 1.2, 120));
     }
 
     public void initialize() {
@@ -88,7 +87,7 @@ public class TrenchSixBall extends Autonomous {
 
         Path path = new Path(positions, velocities);
 
-        IAction spinUp = new SpinUp(shooter, feeder);
+        IAction spinUp = new SpinUp(shooter, feeder, 120);
         IAction powerCellAcquisition = new Acquire(intake, feeder, false);
 
         PathFollower follower = new PathFollower(drivetrain, path, false, 1.0);

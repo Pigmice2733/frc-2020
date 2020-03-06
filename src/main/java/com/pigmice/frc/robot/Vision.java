@@ -5,6 +5,7 @@ import com.pigmice.frc.lib.controllers.PIDGains;
 import com.pigmice.frc.lib.motion.setpoint.ISetpoint;
 import com.pigmice.frc.lib.motion.setpoint.Setpoint;
 import com.pigmice.frc.lib.utils.Range;
+import com.pigmice.frc.lib.utils.Ring;
 
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
@@ -16,34 +17,52 @@ public class Vision {
     private static final NetworkTableEntry widthEntry = input.getEntry("targetWidth");
     private static final NetworkTableEntry ledPercentEntry = input.getEntry("ledPercent");
     private static final NetworkTableEntry targetVisibleEntry = input.getEntry("targetVisible");
+    private static final NetworkTableEntry distance = input.getEntry("distance");
+
+    private static final Ring widthBuffer = new Ring(5);
+    private static final Ring angleBuffer = new Ring(5);
 
     private static final ISetpoint alignmentSetpoint = new Setpoint(5.0, 0.0, 0.0, 0.0, 0.0);
     private static final PID alignmentPID;
 
     static {
-        PIDGains gains = new PIDGains(-0.1 / 30, -0.005, 0.0, 0.0, 0.0, 0.0);
+        PIDGains gains = new PIDGains(-0.075 / 30, -0.0005, 0.0, 0.0, 0.0, 0.0);
         Range outputBounds = new Range(-0.2, 0.2);
         alignmentPID = new PID(gains, outputBounds, 0.02);
     }
 
-    private static final double ledPower = 30;
+    private static final double ledPower = 60;
+    private static final double focalLength = 161;
+    private static final double actualTargetWidth = 40;
 
     private static boolean currentlyAligning = false;
 
     public static double update() {
+        if (!currentlyAligning) {
+            currentlyAligning = true;
+            alignmentPID.initialize(angleBuffer.average(), 0.0);
+            ledPercentEntry.setDouble(ledPower);
+        }
+
         if(!targetIsVisible()) {
             return 0.0;
         }
 
-        double angle = targetAngle();
+        double angle = angleEntry.getDouble(0.0);
+        double width = widthEntry.getDouble(0.0);
+
+        angleBuffer.put(angle);
+        widthBuffer.put(width);
+
+        distance.setDouble(targetDistance());
 
         if(!currentlyAligning) {
             currentlyAligning = true;
-            alignmentPID.initialize(angle, 0.0);
+            alignmentPID.initialize(angleBuffer.average(), 0.0);
             ledPercentEntry.setDouble(ledPower);
         }
 
-        return alignmentPID.calculateOutput(angle, alignmentSetpoint);
+        return alignmentPID.calculateOutput(angleBuffer.average(), alignmentSetpoint);
     }
 
     public static void stop() {
@@ -57,15 +76,15 @@ public class Vision {
         return targetVisibleEntry.getBoolean(false);
     }
 
-    public static double targetWidth() {
-        return widthEntry.getDouble(0.0);
+    public static double targetDistance() {
+        return focalLength * actualTargetWidth / widthBuffer.average();
     }
 
     public static double targetAngle() {
-        return angleEntry.getDouble(0.0);
+        return angleBuffer.average();
     }
 
     public static double alignmentError() {
-        return Math.abs(angleEntry.getDouble(0.0) - alignmentSetpoint.getPosition());
+        return Math.abs(angleBuffer.average() - alignmentSetpoint.getPosition());
     }
 }

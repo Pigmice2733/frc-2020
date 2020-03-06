@@ -1,7 +1,6 @@
 package com.pigmice.frc.robot.autonomous.tasks;
 
 import com.pigmice.frc.robot.subsystems.Shooter;
-import com.pigmice.frc.robot.subsystems.Shooter.Action;
 
 import edu.wpi.first.wpilibj.Timer;
 
@@ -10,12 +9,12 @@ public class SpinUp implements ITask {
 
     private double startTime = 0.0;
     private final double time;
-    private final Action action;
+    private final double targetRange;
 
-    public SpinUp(Shooter shooter, double time, Action action) {
+    public SpinUp(Shooter shooter, double time, double targetRange) {
         this.shooter = shooter;
         this.time = time;
-        this.action = action;
+        this.targetRange = targetRange;
     }
 
     @Override
@@ -26,7 +25,7 @@ public class SpinUp implements ITask {
 
     @Override
     public boolean update() {
-        shooter.run(action);
+        shooter.setRange(targetRange);
         shooter.setHood(true);
 
         if (Timer.getFPGATimestamp() - startTime > time) {

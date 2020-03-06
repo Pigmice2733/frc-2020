@@ -3,7 +3,6 @@ package com.pigmice.frc.robot.autonomous.tasks;
 import com.pigmice.frc.robot.subsystems.Feeder;
 import com.pigmice.frc.robot.subsystems.Feeder.LiftAction;
 import com.pigmice.frc.robot.subsystems.Shooter;
-import com.pigmice.frc.robot.subsystems.Shooter.Action;
 
 import edu.wpi.first.wpilibj.Timer;
 
@@ -12,16 +11,16 @@ public class Shoot implements ITask {
     private final Feeder feeder;
 
     private final double shootLength;
-    private final Action action;
+    private final double targetRange;
 
     private double startTime = 0.0;
     private boolean shootingStarted = false;
 
-    public Shoot(Shooter shooter, Feeder feeder, double shootLength, Action action) {
+    public Shoot(Shooter shooter, Feeder feeder, double shootLength, double targetRange) {
         this.shooter = shooter;
         this.feeder = feeder;
         this.shootLength = shootLength;
-        this.action = action;
+        this.targetRange = targetRange;
     }
 
     @Override
@@ -32,7 +31,7 @@ public class Shoot implements ITask {
 
     @Override
     public boolean update() {
-        shooter.run(action);
+        shooter.setRange(targetRange);
 
         if (shooter.isReady() && !shootingStarted) {
             shootingStarted = true;
@@ -45,7 +44,7 @@ public class Shoot implements ITask {
         }
 
         if (shootingStarted && Timer.getFPGATimestamp() - startTime > shootLength) {
-            shooter.run(Action.HOLD);
+            shooter.stop();
             feeder.runLift(LiftAction.HOLD);
             feeder.runHopper(false);
 
