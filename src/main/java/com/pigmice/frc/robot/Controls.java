@@ -163,7 +163,7 @@ public class Controls {
 
         if (operatorJoystick.getName().equals("EasySMX CONTROLLER")) {
             operator = new EasySMX(operatorJoystick);
-        } else if (driverJoystick.getName().equals("Controller (XBOX 360 For Windows)")) {
+        } else if (operatorJoystick.getName().equals("Controller (XBOX 360 For Windows)")) {
             operator = new XBox(operatorJoystick);
         } else {
             operator = new XBox(operatorJoystick);
