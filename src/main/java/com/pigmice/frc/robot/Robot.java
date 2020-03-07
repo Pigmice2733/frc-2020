@@ -9,6 +9,7 @@ import java.util.Properties;
 import com.pigmice.frc.robot.autonomous.Autonomous;
 import com.pigmice.frc.robot.autonomous.LeaveLine;
 import com.pigmice.frc.robot.autonomous.TrenchFiveBall;
+import com.pigmice.frc.robot.autonomous.TrenchFiveBallAngled;
 import com.pigmice.frc.robot.autonomous.TrenchSixBall;
 import com.pigmice.frc.robot.autonomous.VisionTest;
 import com.pigmice.frc.robot.subsystems.Climber;
@@ -64,8 +65,9 @@ public class Robot extends TimedRobot {
 
         autoRoutines.add(new TrenchSixBall(drivetrain, shooter, feeder, intake));
         autoRoutines.add(new TrenchFiveBall(drivetrain, shooter, feeder, intake));
+        autoRoutines.add(new TrenchFiveBallAngled(drivetrain, shooter, feeder, intake));
         autoRoutines.add(new LeaveLine(drivetrain));
-        autoRoutines.add(new VisionTest(drivetrain, shooter, feeder));
+        autoRoutines.add(new VisionTest(drivetrain, shooter, feeder, intake));
         Autonomous.setOptions(autoRoutines);
     }
 
@@ -98,14 +100,19 @@ public class Robot extends TimedRobot {
     public void teleopPeriodic() {
         controls.update();
 
+        if(controls.visionAlign() || controls.shoot()) {
+            Vision.update();
+        } else {
+            Vision.stop();
+        }
+
         subsystems.forEach((ISubsystem subsystem) -> subsystem.updateInputs());
 
         if (controls.visionAlign()) {
-            double output = Vision.update();
+            double output = Vision.pidOutput();
             drivetrain.arcadeDrive(controls.driveSpeed(), output);
         } else {
             drivetrain.arcadeDrive(controls.driveSpeed(), controls.turnSpeed());
-            Vision.stop();
         }
 
         feeder.runHopper(controls.feed() || controls.intake());
@@ -127,14 +134,18 @@ public class Robot extends TimedRobot {
             shooter.stop();
         }
 
-        shooter.setHood(controls.extendHood());
-
         if (controls.climbUp()) {
             climber.driveUp();
         } else if (controls.climbDown()) {
             climber.driveDown();
         } else {
             climber.stop();
+        }
+
+        if(controls.speedDown()) {
+            shooter.downPower();
+        } else if(controls.speedUp()) {
+            shooter.upPower();
         }
 
         subsystems.forEach((ISubsystem subsystem) -> subsystem.updateOutputs());

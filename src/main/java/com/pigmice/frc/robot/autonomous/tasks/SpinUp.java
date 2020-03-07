@@ -26,7 +26,6 @@ public class SpinUp implements ITask {
     @Override
     public boolean update() {
         shooter.setRange(targetRange);
-        shooter.setHood(true);
 
         if (Timer.getFPGATimestamp() - startTime > time) {
             return true;

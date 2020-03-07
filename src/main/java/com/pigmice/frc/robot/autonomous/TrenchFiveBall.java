@@ -22,7 +22,7 @@ public class TrenchFiveBall extends Autonomous {
         PathFollower acquisition = constructAcquisition(drivetrain, intake, feeder);
         PathFollower returnAndSpinUp = constructReturnPath(drivetrain, shooter, intake, feeder);
 
-        this.subroutines = Arrays.asList(acquisition, returnAndSpinUp, new Shoot(shooter, feeder, 2.0, 120));
+        this.subroutines = Arrays.asList(acquisition, returnAndSpinUp, new Shoot(shooter, feeder, intake, 5.0, 120));
     }
 
     public void initialize() {
@@ -88,9 +88,9 @@ public class TrenchFiveBall extends Autonomous {
         IAction powerCellAcquisition = new Acquire(intake, feeder, false);
 
         PathFollower follower = new PathFollower(drivetrain, path, false, 1.0);
-        follower.addAction(0, 1, powerCellAcquisition);
-        follower.addAction(1, 2, backFeed);
-        follower.addAction(2, 5, spinUp);
+        follower.addAction(0, 2, powerCellAcquisition);
+        follower.addAction(3, 3, backFeed);
+        follower.addAction(4, 5, spinUp);
 
         return follower;
     }

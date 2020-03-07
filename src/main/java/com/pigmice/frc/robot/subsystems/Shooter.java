@@ -17,8 +17,6 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.ControlType;
 
 import edu.wpi.first.networktables.NetworkTableEntry;
-import edu.wpi.first.wpilibj.DoubleSolenoid;
-import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
@@ -62,10 +60,11 @@ public class Shooter implements ISubsystem {
         private static final SortedMap<Double, Double> seedData = new TreeMap<>();
 
         static {
-            seedData.put(0.0, 4500.0);
-            seedData.put(120.0, 5500.0);
-            seedData.put(240.0, 6500.0);
-            seedData.put(360.0, 7500.0);
+            seedData.put(0.0, 2400.0);
+            seedData.put(65.0, 2800.0);
+            seedData.put(150.0, 3000.0);
+            seedData.put(300.0, 3800.0);
+            seedData.put(360.0, 4200.0);
             seedData.put(maxRange, maxPower.getVelocity());
         }
 
@@ -87,7 +86,7 @@ public class Shooter implements ISubsystem {
         public static ShooterSetpoint getPowerAtRange(double range) {
             int index = (int) (range / 10.0);
 
-            if (index > data.size()) {
+            if (index >= data.size()) {
                 return maxPower;
             }
 
@@ -99,14 +98,10 @@ public class Shooter implements ISubsystem {
     private final CANPIDController canPID;
     private final CANEncoder encoder;
 
-    private DoubleSolenoid hoodSolenoid;
-
     private final MotorTester.Config motorTest = new MotorTester.Config(0.35, 0.1, 1.0);
 
     private double shooterRPM = 0.0;
     private double shooterVoltage = 0.0;
-    private Value hoodState = Value.kOff;
-    private Value previousHoodState = Value.kOff;
 
     private static final ShooterSetpoint stoppedSetpoint = new ShooterSetpoint(0);
     private static final ShooterSetpoint clearSetpoint = new ShooterSetpoint(-100);
@@ -117,6 +112,7 @@ public class Shooter implements ISubsystem {
 
     private final NetworkTableEntry shooterLeaderReport;
     private final NetworkTableEntry shooterFollowerReport;
+    private double targetShooterRPM;
 
     private final NetworkTableEntry shooterRPMDisplay, shooterVoltageDisplay, shooterReadyDisplay;
 
@@ -138,17 +134,14 @@ public class Shooter implements ISubsystem {
         encoder = motor.getEncoder();
         canPID = motor.getPIDController();
 
-        canPID.setP(1e-4);
-        canPID.setI(3e-7);
-        canPID.setD(0);
+        canPID.setP(1.5e-4);
+        canPID.setI(4e-7);
+        canPID.setD(4e-7);
         canPID.setIZone(0);
-        canPID.setFF(0.000015);
+        canPID.setFF(0.00002);
         canPID.setOutputRange(-1, 1);
 
-        hoodSolenoid = new DoubleSolenoid(ShooterConfiguration.forwardSolenoidPort,
-                ShooterConfiguration.reverseSolenoidPort);
-
-        encoder.setVelocityConversionFactor(1.0 / ShooterConfiguration.reduction);
+        encoder.setVelocityConversionFactor(1.0);
 
         ShuffleboardLayout testReportLayout = Shuffleboard.getTab(Dashboard.systemsTestTabName)
                 .getLayout("Shooter", BuiltInLayouts.kList).withSize(2, 2)
@@ -166,13 +159,11 @@ public class Shooter implements ISubsystem {
         shooterRPMDisplay = displayLayout.add("Shooter RPM", 0.0).withWidget(BuiltInWidgets.kGraph).getEntry();
         shooterVoltageDisplay = displayLayout.add("Shooter Voltage", 0.0).withWidget(BuiltInWidgets.kGraph).getEntry();
         shooterReadyDisplay = displayLayout.add("Shooter Ready", false).getEntry();
+        targetShooterRPM = 0.0;
     }
 
     @Override
     public void initialize() {
-        hoodState = hoodSolenoid.get();
-        previousHoodState = hoodState;
-
         setpoint = stoppedSetpoint;
 
         updateDashboard();
@@ -182,16 +173,20 @@ public class Shooter implements ISubsystem {
         setpoint = PowerCurve.getPowerAtRange(range);
     }
 
+    public void upPower() {
+        targetShooterRPM += 100;
+    }
+
+    public void downPower() {
+        targetShooterRPM -= 100;
+    }
+
     public void stop() {
         setpoint = stoppedSetpoint;
     }
 
     public void clear() {
         setpoint = clearSetpoint;
-    }
-
-    public void setHood(boolean extend) {
-        hoodState = extend ? Value.kForward : Value.kReverse;
     }
 
     public boolean isReady() {
@@ -212,18 +207,14 @@ public class Shooter implements ISubsystem {
 
     @Override
     public void updateOutputs() {
-        if(setpoint.getVelocity() != 0.0) {
-            canPID.setReference(setpoint.getVelocity(), ControlType.kVelocity);
+        if (setpoint.getVelocity() != 0.0) {
+            double target = setpoint.getVelocity();
+            canPID.setReference(target, ControlType.kVelocity);
         } else {
             canPID.setReference(0.0, ControlType.kDutyCycle);
         }
 
         shooterVoltage = motor.getAppliedOutput() * 100.0;
-
-        if (hoodState != previousHoodState) {
-            hoodSolenoid.set(hoodState);
-            previousHoodState = hoodState;
-        }
     }
 
     @Override

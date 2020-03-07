@@ -148,6 +148,8 @@ public class Controls {
 
     Debouncer debouncer;
     Toggle hoodToggle;
+    Debouncer down;
+    Debouncer up;
 
     public Controls() {
         XboxController driverJoystick = new XboxController(0);
@@ -170,6 +172,8 @@ public class Controls {
         }
 
         debouncer = new Debouncer(operator::extendHood);
+        up = new Debouncer(operator::climbUp);
+        down = new Debouncer(operator::climbDown);
         hoodToggle = new Toggle(debouncer);
     }
 
@@ -179,6 +183,8 @@ public class Controls {
     public void update() {
         debouncer.update();
         hoodToggle.update();
+        up.update();
+        down.update();
     }
 
     public double turnSpeed() {
@@ -211,11 +217,19 @@ public class Controls {
     }
 
     public boolean climbUp() {
-        return operator.climbUp();
+        return false;//operator.climbUp();
     }
 
     public boolean climbDown() {
-        return operator.climbDown();
+        return false;//operator.climbDown();
+    }
+
+    public boolean speedUp() {
+        return up.get();
+    }
+
+    public boolean speedDown() {
+        return down.get();
     }
 
     public boolean visionAlign() {

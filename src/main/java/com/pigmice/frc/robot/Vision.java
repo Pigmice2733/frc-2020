@@ -25,9 +25,11 @@ public class Vision {
     private static final ISetpoint alignmentSetpoint = new Setpoint(5.0, 0.0, 0.0, 0.0, 0.0);
     private static final PID alignmentPID;
 
+    private static double pidOutput = 0.0;
+
     static {
-        PIDGains gains = new PIDGains(-0.075 / 30, -0.0005, 0.0, 0.0, 0.0, 0.0);
-        Range outputBounds = new Range(-0.2, 0.2);
+        PIDGains gains = new PIDGains(-0.8e-2, -1.5e-2, -1e-6, 0.0, 0.0, 0.0);
+        Range outputBounds = new Range(-0.15, 0.15);
         alignmentPID = new PID(gains, outputBounds, 0.02);
     }
 
@@ -37,7 +39,7 @@ public class Vision {
 
     private static boolean currentlyAligning = false;
 
-    public static double update() {
+    public static void update() {
         if (!currentlyAligning) {
             currentlyAligning = true;
             alignmentPID.initialize(angleBuffer.average(), 0.0);
@@ -45,7 +47,8 @@ public class Vision {
         }
 
         if(!targetIsVisible()) {
-            return 0.0;
+            pidOutput = 0.0;
+            return;
         }
 
         double angle = angleEntry.getDouble(0.0);
@@ -56,13 +59,7 @@ public class Vision {
 
         distance.setDouble(targetDistance());
 
-        if(!currentlyAligning) {
-            currentlyAligning = true;
-            alignmentPID.initialize(angleBuffer.average(), 0.0);
-            ledPercentEntry.setDouble(ledPower);
-        }
-
-        return alignmentPID.calculateOutput(angleBuffer.average(), alignmentSetpoint);
+        pidOutput = alignmentPID.calculateOutput(angleBuffer.average(), alignmentSetpoint);
     }
 
     public static void stop() {
@@ -70,6 +67,10 @@ public class Vision {
             currentlyAligning = false;
             ledPercentEntry.setDouble(0.0);
         }
+    }
+
+    public static double pidOutput() {
+        return pidOutput;
     }
 
     public static boolean targetIsVisible() {
