@@ -4,29 +4,29 @@ import com.pigmice.frc.robot.subsystems.Feeder;
 import com.pigmice.frc.robot.subsystems.Feeder.LiftAction;
 import com.pigmice.frc.robot.subsystems.Shooter;
 
-public class SpinUp implements IAction {
+public class ClearShooter implements IAction {
     private final Shooter shooter;
     private final Feeder feeder;
-    private final double targetRange;
 
-    public SpinUp(Shooter shooter, Feeder feeder, double targetRange) {
+    public ClearShooter(Shooter shooter, Feeder feeder) {
         this.shooter = shooter;
         this.feeder = feeder;
-        this.targetRange = targetRange;
     }
 
     @Override
     public void initialize() {
+        shooter.initialize();
     }
 
     @Override
     public void update() {
-        shooter.setRange(targetRange);
-        //feeder.runLift(LiftAction.BACKFEED);
+        shooter.clear();
+        feeder.runLift(LiftAction.BACKFEED);
     }
 
     @Override
     public void end() {
+        shooter.stop();
         feeder.runLift(LiftAction.HOLD);
     }
 }

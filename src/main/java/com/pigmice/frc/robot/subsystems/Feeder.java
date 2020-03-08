@@ -14,7 +14,7 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
 
 public class Feeder implements ISubsystem {
     public enum LiftAction {
-        FEED(0.65), GRAB(0.25), BACKFEED(-0.3), HOLD(0.0);
+        FEED(0.5), GRAB(0.25), BACKFEED(-0.3), HOLD(0.0);
 
         public final double speed;
 
@@ -30,7 +30,7 @@ public class Feeder implements ISubsystem {
     private final MotorTester.Config liftTest = new MotorTester.Config(0.75, 0.1, 1.0);
     private final NetworkTableEntry liftReport, liftFollowerReport, hopperReport, hopperFollowerReport;
 
-    private final double hopperSpeed = 0.5;
+    private final double hopperSpeed = 0.4;
 
     private LiftAction liftAction = LiftAction.HOLD;
     private boolean runHopper = false;
@@ -58,7 +58,7 @@ public class Feeder implements ISubsystem {
 
         hopperFollower = new TalonSRX(FeederConfiguration.hopperFollowerMotorPort);
         hopperFollower.follow(hopperMotor);
-        hopperFollower.setInverted(!FeederConfiguration.hopperInverted);
+        hopperFollower.setInverted(FeederConfiguration.hopperInverted);
 
         ShuffleboardLayout testReportLayout = Shuffleboard.getTab(Dashboard.systemsTestTabName)
                 .getLayout("Feeder", BuiltInLayouts.kList)

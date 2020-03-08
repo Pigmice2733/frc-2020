@@ -9,7 +9,9 @@ import java.util.Properties;
 import com.pigmice.frc.robot.autonomous.Autonomous;
 import com.pigmice.frc.robot.autonomous.LeaveLine;
 import com.pigmice.frc.robot.autonomous.TrenchFiveBall;
+import com.pigmice.frc.robot.autonomous.TrenchFiveBallAngled;
 import com.pigmice.frc.robot.autonomous.TrenchSixBall;
+import com.pigmice.frc.robot.autonomous.VisionTest;
 import com.pigmice.frc.robot.subsystems.Climber;
 import com.pigmice.frc.robot.subsystems.Drivetrain;
 import com.pigmice.frc.robot.subsystems.Feeder;
@@ -18,7 +20,6 @@ import com.pigmice.frc.robot.subsystems.ISubsystem;
 import com.pigmice.frc.robot.subsystems.Intake;
 import com.pigmice.frc.robot.subsystems.LEDs;
 import com.pigmice.frc.robot.subsystems.Shooter;
-import com.pigmice.frc.robot.subsystems.Shooter.Action;
 
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -64,7 +65,9 @@ public class Robot extends TimedRobot {
 
         autoRoutines.add(new TrenchSixBall(drivetrain, shooter, feeder, intake));
         autoRoutines.add(new TrenchFiveBall(drivetrain, shooter, feeder, intake));
+        autoRoutines.add(new TrenchFiveBallAngled(drivetrain, shooter, feeder, intake));
         autoRoutines.add(new LeaveLine(drivetrain));
+        autoRoutines.add(new VisionTest(drivetrain, shooter, feeder, intake));
         Autonomous.setOptions(autoRoutines);
     }
 
@@ -97,9 +100,20 @@ public class Robot extends TimedRobot {
     public void teleopPeriodic() {
         controls.update();
 
+        if(controls.visionAlign() || controls.shoot()) {
+            Vision.update();
+        } else {
+            Vision.stop();
+        }
+
         subsystems.forEach((ISubsystem subsystem) -> subsystem.updateInputs());
 
-        drivetrain.arcadeDrive(controls.driveSpeed(), controls.turnSpeed());
+        if (controls.visionAlign()) {
+            double output = Vision.pidOutput();
+            drivetrain.arcadeDrive(controls.driveSpeed(), output);
+        } else {
+            drivetrain.arcadeDrive(controls.driveSpeed(), controls.turnSpeed());
+        }
 
         feeder.runHopper(controls.feed() || controls.intake());
         feeder.runLift(
@@ -108,8 +122,17 @@ public class Robot extends TimedRobot {
         intake.run(controls.intake());
         intake.setPosition(controls.intake() ? Intake.Position.DOWN : Intake.Position.UP);
 
-        shooter.run(controls.shoot() ? Action.LONG_SHOT : (controls.backFeed() ? Action.CLEAR : Action.HOLD));
-        shooter.setHood(controls.extendHood());
+        if(controls.shoot()) {
+            if(Vision.targetIsVisible()) {
+                shooter.setRange(Vision.targetDistance());
+            } else {
+                shooter.setRange(20 * 12);
+            }
+        } else if(controls.backFeed()) {
+            shooter.clear();
+        } else {
+            shooter.stop();
+        }
 
         if (controls.climbUp()) {
             climber.driveUp();
@@ -117,6 +140,12 @@ public class Robot extends TimedRobot {
             climber.driveDown();
         } else {
             climber.stop();
+        }
+
+        if(controls.speedDown()) {
+            shooter.downPower();
+        } else if(controls.speedUp()) {
+            shooter.upPower();
         }
 
         subsystems.forEach((ISubsystem subsystem) -> subsystem.updateOutputs());
@@ -154,9 +183,7 @@ public class Robot extends TimedRobot {
         Properties properties = new Properties();
 
         NetworkTableEntry timestampDisplay = Shuffleboard.getTab(Dashboard.developmentTabName)
-                .add("Deploy Timestamp", "none")
-                .withSize(2, 1)
-                .withPosition(Dashboard.deployTimestampPosition, 0)
+                .add("Deploy Timestamp", "none").withSize(2, 1).withPosition(Dashboard.deployTimestampPosition, 0)
                 .getEntry();
 
         try {

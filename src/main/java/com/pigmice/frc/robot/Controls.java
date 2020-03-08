@@ -10,6 +10,7 @@ public class Controls {
     private interface DriverProfile {
         double driveSpeed();
         double turnSpeed();
+        boolean visionAlign();
     }
 
     private interface OperatorProfile {
@@ -45,6 +46,11 @@ public class Controls {
 
         @Override
         public boolean intake() {
+            return joystick.getRawButton(8);
+        }
+
+        @Override
+        public boolean visionAlign() {
             return joystick.getRawButton(8);
         }
 
@@ -102,6 +108,11 @@ public class Controls {
         }
 
         @Override
+        public boolean visionAlign() {
+            return joystick.getTriggerAxis(Hand.kRight) > 0.5;
+        }
+
+        @Override
         public boolean shoot() {
             return joystick.getTriggerAxis(Hand.kLeft) > 0.5;
         }
@@ -137,6 +148,8 @@ public class Controls {
 
     Debouncer debouncer;
     Toggle hoodToggle;
+    Debouncer down;
+    Debouncer up;
 
     public Controls() {
         XboxController driverJoystick = new XboxController(0);
@@ -152,13 +165,15 @@ public class Controls {
 
         if (operatorJoystick.getName().equals("EasySMX CONTROLLER")) {
             operator = new EasySMX(operatorJoystick);
-        } else if (driverJoystick.getName().equals("Controller (XBOX 360 For Windows)")) {
+        } else if (operatorJoystick.getName().equals("Controller (XBOX 360 For Windows)")) {
             operator = new XBox(operatorJoystick);
         } else {
             operator = new XBox(operatorJoystick);
         }
 
         debouncer = new Debouncer(operator::extendHood);
+        up = new Debouncer(operator::climbUp);
+        down = new Debouncer(operator::climbDown);
         hoodToggle = new Toggle(debouncer);
     }
 
@@ -168,6 +183,8 @@ public class Controls {
     public void update() {
         debouncer.update();
         hoodToggle.update();
+        up.update();
+        down.update();
     }
 
     public double turnSpeed() {
@@ -205,5 +222,17 @@ public class Controls {
 
     public boolean climbDown() {
         return operator.climbDown();
+    }
+
+    public boolean speedUp() {
+        return up.get();
+    }
+
+    public boolean speedDown() {
+        return down.get();
+    }
+
+    public boolean visionAlign() {
+        return driver.visionAlign();
     }
 }
