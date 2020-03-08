@@ -217,11 +217,11 @@ public class Controls {
     }
 
     public boolean climbUp() {
-        return false;//operator.climbUp();
+        return operator.climbUp();
     }
 
     public boolean climbDown() {
-        return false;//operator.climbDown();
+        return operator.climbDown();
     }
 
     public boolean speedUp() {
